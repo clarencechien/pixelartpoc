@@ -1,9 +1,10 @@
 import {loadDistrict} from './district-render.js';
 
 const places=[
-  {id:'bridge',name:'中正橋',en:'Zhongzheng Bridge',kind:'河岸地標',lon:121.51555,lat:25.02012,z:49,span:540,note:'白色橋拱跨過新店溪。往南平移越過河濱，再沿永和路走，就是頂溪站。'},
-  {id:'dingxi',name:'頂溪站',en:'Dingxi Station',kind:'捷運街角',lon:121.515482,lat:25.014196,z:7,span:350,note:'二號出口位在永和路二段。從這裡往北接中正橋，往南則能沿著商店街走到樂華夜市。'},
-  {id:'lehua',name:'樂華夜市',en:'Lehua Night Market',kind:'夜市街區',lon:121.51372,lat:25.00872,z:5,span:330,note:'永平路上的彩色棚架沿街彎進街區。放大高精度地圖，可以看到攤棚條紋、水塔和周邊公寓的窗格。'}
+  {id:'bridge',name:'中正橋',en:'Zhongzheng Bridge',kind:'河岸地標',lon:121.51555,lat:25.02012,z:49,span:310,note:'白色橋拱跨過新店溪。往南平移越過河濱，再沿永和路走，就是頂溪站。'},
+  {id:'dingxi',name:'頂溪站',en:'Dingxi Station',kind:'捷運街角',lon:121.515482,lat:25.014196,z:7,span:122,note:'二號出口位在永和路二段。從這裡往北接中正橋，往南則能沿著商店街走到樂華夜市。'},
+  {id:'lehua',name:'樂華夜市',en:'Lehua Night Market',kind:'夜市街區',lon:121.51399,lat:25.00867,z:8.7,span:98,note:'永平路上的彩色棚架沿街彎進街區。沿路找夜市入口的紅底招牌、斜面遮棚和攤前的燈籠。'},
+  {id:'baofu',name:'保福宮',en:'Baofu Temple',kind:'寺廟建築',lon:121.50864028,lat:25.01319537,z:23,span:118,note:'從仁愛路看進廟埕，屋簷前低後高。旋轉鏡頭，可以看到三進廟殿的層次、上翹的屋脊、廊柱和簷下燈籠。'}
 ];
 const $=id=>document.getElementById(id);
 const viewport=$('viewport'),cam={x:0,y:0,angle:-.45,zoom:1,pitch:.68};
@@ -64,7 +65,7 @@ function draw(time){
   $('scale').textContent=meters+' m';$('scale').style.setProperty('--bar',Math.round(meters*cam.zoom)+'px');
   const d=scene.data;$('coords').textContent=(d.origin[1]+cam.y/d.metersPerDegree[1]).toFixed(5)+'° N  '+(d.origin[0]+cam.x/d.metersPerDegree[0]).toFixed(5)+'° E';
   $('topdown').setAttribute('aria-pressed',String(cam.pitch===1));
-  $('out').disabled=cam.zoom<=homeScale*.81;$('in').disabled=cam.zoom>=5.99;
+  $('out').disabled=cam.zoom<=homeScale*.81;$('in').disabled=cam.zoom>=13.99;
   if(tween)invalidate();
 }
 function invalidate(){if(!frame)frame=requestAnimationFrame(draw);}
@@ -85,7 +86,7 @@ function homeCamera(){
 }
 function writeUrl(){
   const url=new URL(location.href);url.searchParams.set('quality',fine?'fine':'low');
-  if(selected>=0)url.searchParams.set('place',places[selected].id);else url.searchParams.delete('place');
+  if(selected>=0)url.searchParams.set('place',places[selected].id);else url.searchParams.set('place','all');
   history.replaceState(null,'',url);
 }
 function updateNotes(){
@@ -101,7 +102,11 @@ function updateNotes(){
 }
 function focusPlace(i,animate=true){
   if(!ready)return;selected=i;const p=places[i],[x,y]=world(p.lon,p.lat);
-  updateNotes();const pitch=cam.pitch===1?1:(i===2?.87:.68);go({x,y:y-10,angle:cam.angle,pitch,zoom:Math.min(4.9,viewport.clientWidth/p.span)},animate);
+  updateNotes();
+  const pitch=cam.pitch===1?1:[.67,.70,.75,.59][i];
+  const angle=[-1.02,.65,1.20,-.42][i];
+  const lift=[25,7,6,11][i]*Math.sqrt(1-pitch*pitch)/pitch;
+  go({x:x-Math.sin(angle)*lift,y:y-Math.cos(angle)*lift,angle,pitch,zoom:Math.min(12,viewport.clientWidth/p.span)},animate);
 }
 function overview(animate=true){if(!ready)return;selected=-1;updateNotes();go(homeCamera(),animate);}
 let qualityRequest=0;
@@ -109,7 +114,7 @@ function qualityButtons(){
   $('fine').setAttribute('aria-pressed',String(fine));$('low').setAttribute('aria-pressed',String(!fine));
   if(scene){
     const d=scene.data;
-    $('evidence').textContent=fine?'目前顯示 '+d.nlscFootprints.toLocaleString('zh-TW')+' 筆國土測繪中心衍生建物輪廓，缺口以 OSM 補充。立面、屋頂設備及攤棚為美術示意。':'目前顯示 OSM 建物輪廓與街廓補繪，部分樓高為估計值。';
+    $('evidence').textContent='兩版共用 '+d.nlscFootprints.toLocaleString('zh-TW')+' 筆國土測繪中心衍生輪廓及 OSM 補圖。'+(fine?'特色版以像素造型詮釋廟宇、街屋和地標，立面及屋頂細節為美術示意。':'低精度基準沿用上一版高精度的建物和街景。');
   }
 }
 async function quality(value){
@@ -130,7 +135,7 @@ function clampCenter(){
 }
 function zoomBy(factor,x=0,y=0){
   if(!ready)return;tween=null;
-  const old=inverse(x,y);cam.zoom=Math.min(6,Math.max(homeScale*.80,cam.zoom*factor));const after=inverse(x,y);
+  const old=inverse(x,y);cam.zoom=Math.min(14,Math.max(homeScale*.80,cam.zoom*factor));const after=inverse(x,y);
   cam.x+=old[0]-after[0];cam.y+=old[1]-after[1];clampCenter();invalidate();
 }
 function pan(x,y){if(!ready)return;tween=null;const d=inverse(x,y);cam.x-=d[0];cam.y-=d[1];clampCenter();invalidate();}
@@ -170,6 +175,6 @@ new ResizeObserver(()=>{if(ready){const w=viewport.clientWidth;if(w!==userWidth)
 try{
   scene=await loadDistrict($('map'),fine);ready=true;qualityButtons();$('loading').hidden=true;go(homeCamera(),false);
   const initial=places.findIndex(p=>p.id===query.get('place'));
-  if(initial>=0)focusPlace(initial,false);else updateNotes();
+  if(initial>=0)focusPlace(initial,false);else if(query.get('place')==='all')updateNotes();else focusPlace(3,false);
   invalidate();
 }catch(error){console.error(error);$('loading').innerHTML='全區地圖載入失敗，<a href="classic.html">開啟原版地景</a>。';}

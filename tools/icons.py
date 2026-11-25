@@ -2,7 +2,7 @@
 from PIL import Image,ImageDraw
 from pathlib import Path
 D=Path(__file__).resolve().parents[1]/'dist/assets'
-for name in ['bridge','dingxi','lehua','logo']:
+for name in ['bridge','dingxi','lehua','baofu','logo']:
     im=Image.new('RGBA',(56,48));p=ImageDraw.Draw(im)
     def box(points,color):p.rectangle(points,fill=color)
     def poly(points,color):p.polygon(points,fill=color)
@@ -41,6 +41,17 @@ for name in ['bridge','dingxi','lehua','logo']:
             poly([(x,y),(x+5,y-2),(x+23,y+6),(x+19,y+9)],'#c9694d' if k%2==0 else '#f3d999')
         poly([(6,19),(25,27),(25,30),(6,22)],'#b1684e')
         for x,y in [(15,26),(36,24)]:box((x,y,x+3,y+4),'#e69c56');box((x+1,y-1,x+2,y),'#725939')
+    elif name=='baofu':
+        poly([(4,34),(29,23),(52,30),(26,43)],'#a9a98b')
+        for x,y in [(13,26),(23,30),(34,27),(43,23)]:
+            box((x,y,x+2,y+9),'#a3543f')
+        for x,y in [(16,9),(9,18)]:
+            roof=[(x-4,y+2),(x+2,y+4),(x+14,y-2),(x+24,y+1),
+                  (x+28,y-2),(x+26,y+4),(x+14,y+10),(x-2,y+5)]
+            poly(roof,'#be6c42')
+            line(roof[:5],'#40776a',2)
+            line(roof[5:],'#e5a456',2)
+        box((23,29,28,31),'#365b4e')
     else:
         for off,c in [(7,'#83a990'),(3,'#aec998'),(0,'#f2e6b4')]:
             poly([(6,21+off),(27,10+off),(49,20+off),(28,31+off)],c)

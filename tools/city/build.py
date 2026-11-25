@@ -7,6 +7,7 @@ import random
 import struct
 from collections import Counter, defaultdict
 from nlsc import buildings_from_tiles
+import architecture
 from pathlib import Path
 
 import duckdb
@@ -127,6 +128,10 @@ def tri(a,b,c,tone,mat=0,direction=0,seed=0):
     for x,y,z in (a,b,c):buf.extend(vertex.pack(round(x*4),round(y*4),round(z*4),*attrs))
 def quad(a,b,c,d,*args):
     tri(a,b,c,*args);tri(a,c,d,*args)
+def decal(points,uv):
+    for i in (0,1,2,0,2,3):
+        x,y,z=points[i];u,v=uv[i]
+        chunks[key].extend(vertex.pack(round(x*4),round(y*4),round(z*4),255,255,255,6,u,v))
 def block(x,y,z,w,d,h,tone,heading=0,mat=0):
     c,s=math.cos(heading),math.sin(heading);tone=color(tone)
     a=[(x+u*c-v*s,y+u*s+v*c,z) for u,v in [(-w/2,-d/2),(w/2,-d/2),(w/2,d/2),(-w/2,d/2)]]
@@ -265,7 +270,9 @@ for g,w,tags in elevated:
     z=10 if tags.get('name')=='中正橋' else 7
     deck(g,w+1.5,z,'9a9f92')
     for x,y,dx,dy in along(g,46,14):
-        group(x,y);block(x,y,0,max(2.4,w*.22),2.8,z-1,'adb19b')
+        between_abutments=xy(0,25.021)[1]<y<xy(0,25.01922)[1]
+        group(x,y,7 if tags.get('name')=='中正橋' and between_abutments else 0)
+        block(x,y,0,max(2.4,w*.22),2.8,z-1,'adb19b')
     for x,y,dx,dy in along(g,12,3):
         group(x,y,1);block(x,y,z,4,.65,.32,'ead6a2',math.atan2(dy,dx))
 
@@ -277,13 +284,13 @@ for side in [-10.7,10.7]:
     previous=None
     for j in range(81):
         t=j/80; x,y=bridge_pos(t,side);z=10+43*math.sin(math.pi*t)**.83
-        group(x,y)
+        group(x,y,7)
         if previous:
             a,b,h=previous;lo=ring(a,b,h,1.85,1.85);hi=ring(x,y,z,1.85,1.85);stack(lo,hi,'eee9cc',True)
         if j%9==3 and side>0:
             a,b=bridge_pos(t,-10.7)
-            group(x,y,1);block((x+a)/2,(y+b)/2,z,math.hypot(x-a,y-b),.9,.9,'d4d6c0',math.atan2(y-b,x-a))
-            group(x,y)
+            group(x,y,8);block((x+a)/2,(y+b)/2,z,math.hypot(x-a,y-b),.9,.9,'d4d6c0',math.atan2(y-b,x-a))
+            group(x,y,7)
         if j%7==0 and z>11:block(x,y,10,.77,.77,z-10,'d6d9c5')
         previous=x,y,z
 
@@ -317,9 +324,9 @@ for g,w,t in drive:
         block(px-.15*dx,py-.15*dy,.91,2.55,1.59,.65,'6e8587',a)
         block(px-.17*dx,py-.17*dy,1.57,1.55,1.51,.17,tone,a)
 
-station=xy(121.515482,25.014196);x,y=station;group(x,y)
+station=xy(121.515482,25.014196);x,y=station;group(x,y,7)
 block(x,y,0,13,6.4,3.5,'7f9e96');block(x,y,3.5,15.2,7.5,1.2,'72a395')
-group(x,y,1)
+group(x,y,8)
 for j in range(-3,4):block(x+j*1.8,y,4.7,.34,7.5,.25,'c6d6bc')
 block(x+7.6,y,0,.75,.75,5.8,'7c8375');block(x+7.6,y,5.5,2.4,1.1,1.9,'e6b65e')
 # Market stalls sit alongside Yongping Road, clipped to the mapped market.
@@ -329,10 +336,10 @@ for g in market_street:
         if not market.contains(Point(x,y)):continue
         for side in [-1,1]:
             px,py=x-dy*side*3.8,y+dx*side*3.8;a=math.atan2(dy,dx)
-            group(px,py);block(px,py,0,4,2,1.1,'a78c63',a)
+            group(px,py,7);block(px,py,0,4,2,1.1,'a78c63',a)
             tone=rgb(rng.choice(['bb6c51','d8ab64','739d93','c77d5d']))
             block(px,py,2.3,4.8,3.3,.72,tone,a)
-            group(px,py,1)
+            group(px,py,8)
             for j in [-1.5,0,1.5]:block(px+dx*j,py+dy*j,3,.56,3.2,.2,'e8cba0',a)
             for j in [-1.6,1.6]:block(px+dx*j,py+dy*j,1,.19,.26,1.4,'766b53',a)
 
@@ -347,13 +354,35 @@ ground.putalpha(alpha)
 ground.save(OUT/'ground-fine.png',optimize=True)
 low_ground.putalpha(alpha)
 low_ground.resize((width//2,height//2),Image.Resampling.NEAREST).save(OUT/'ground-low.png',optimize=True)
+# Keep the previous high-detail envelope intact for the comparison mode.
+art=architecture.Artist(tri,quad,block,stack,group,decal,OUT)
+temple_site=next(g for _,tags,g in buildings if tags.get('name')=='永和保福宮')
+temple_center=temple_site.centroid
+entry=Point(*station)
+station_cut=geo.box(entry.x-4.4,entry.y-8.4,entry.x+4.6,entry.y+8.0)
+street_graph=STRtree([g for g,w,t in drive])
+landmark_points=[temple_center,entry,Point(*xy(121.51372,25.00872)),Point(*xy(121.51555,25.02012))]
+for fid,tags,g in official+supplement:
+    if temple_site.intersects(g) and temple_site.intersection(g).area>g.area*.42:continue
+    precise_height=number(tags.get('height'),number(tags.get('building:levels'),4)*3.15)
+    ctr=g.centroid
+    near=any(ctr.distance(point)<195 for point in landmark_points)
+    road=drive[int(street_graph.nearest(ctr))][0]
+    clipped=g.difference(station_cut) if station_cut.intersects(g) else g
+    for part in pieces(clipped,'Polygon'):
+        if part.area>=6:architecture.apartment(art,fid,tags,part,max(2,min(175,precise_height)),road,near)
+architecture.temple(art,architecture.Frame(temple_center.x,temple_center.y))
+architecture.station(art,architecture.Frame(*station,.05))
+architecture.market(art,market_street,market,xy(121.51399,25.00867))
+architecture.bridge(art,p0,p1,elevated)
+art.save_signs()
 meshes={}
-for name,levels in [('shared',(0,1)),('low',(2,)),('fine',(3,4))]:
+for name,levels in [('shared',(0,1)),('baseline-props',(7,8)),('low',(2,)),('fine',(3,4)),('streetscape',(5,6))]:
     spans=[];offset=0
     with gzip.GzipFile(str(OUT/(name+'.mesh.gz')),'wb',compresslevel=8,mtime=0) as f:
         for (detail,tx,ty),buf in sorted(chunks.items()):
             if detail not in levels:continue
-            count=len(buf)//vertex.size;spans.append([int(detail in (1,4)),tx,ty,offset,count]);f.write(buf);offset+=count
+            count=len(buf)//vertex.size;spans.append([int(detail in (1,4,6,8)),tx,ty,offset,count]);f.write(buf);offset+=count
     meshes[name]=spans
 metadata={'origin':origin,'metersPerDegree':[sx,sy],'bounds':bounds,'groundPixelMeters':scale,'meshes':meshes,'nlscFootprints':len(official),'nlscHeights':dict(Counter(t['quality'] for _,t,_ in official)),'osmSupplement':len(supplement),'stride':vertex.size,'treeCells':tree_spans,
     'recordedBuildings':len(buildings)-inferred,'inferredBuildings':inferred,'roadSegments':len(roads),'crossingNodes':sum(t.get('highway')=='crossing' for _,t,_ in points)}
@@ -387,3 +416,5 @@ metadata['outline']=[list(p.exterior.simplify(12).coords) for p in pieces(area,'
 
 (OUT/'district.json').write_text(json.dumps(metadata,separators=(',',':')))
 print('map dimensions',width,height,'vertices',offset,'files',[(p.name,p.stat().st_size) for p in OUT.glob('*')],flush=True)
+from roofmap import bake as bake_roof_map
+bake_roof_map(OUT)

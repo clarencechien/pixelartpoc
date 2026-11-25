@@ -1,18 +1,20 @@
 # 大永和 · Yonghe Pixel Atlas
 
-[開啟高精度大永和](https://clarencechien.github.io/pixelartpoc/?quality=fine) · [低精度全區版](https://clarencechien.github.io/pixelartpoc/?quality=low) · [原版三座地景](https://clarencechien.github.io/pixelartpoc/classic.html)
+[開啟保福宮特色版](https://clarencechien.github.io/pixelartpoc/?quality=fine&place=baofu) · [同視角低精度基準](https://clarencechien.github.io/pixelartpoc/?quality=low&place=baofu) · [永和全區](https://clarencechien.github.io/pixelartpoc/?place=all) · [初版三座地景](https://clarencechien.github.io/pixelartpoc/classic.html)
 
-中正橋、捷運頂溪站二號出口、樂華夜市，現在都位在同一張可旋轉的永和地圖。從橋上向南平移，能穿過原本三塊地景之間的街道。走讀線沿道路中心線串起三站，全長約 1.37 公里，供地圖導覽。
+大永和是一張可以從河岸一路移動到市區的像素地圖。首頁從保福宮看起，中正橋、頂溪站與樂華夜市仍由約 1.37 公里的走讀線串起。
 
-![大永和像素地圖](docs/district.webp)
+![同一鏡頭下的保福宮，左為前版高精度，右為新特色版](docs/temple-comparison.webp)
 
-## 比較精度
+## 比較地景
 
-| 版本 | 建物和街景 |
+| 模式 | 看到的差異 |
 |---|---|
-| 高精度全區 | 地圖範圍內 17,305 筆國土測繪中心三維建物衍生輪廓，採資料集的高度欄位，另以 182 筆 OSM 輪廓補充空缺。地面取樣為每像素 1.25 公尺，近看可見水塔、屋頂設備、窗框、車輛及攤棚條紋。 |
-| 低精度全區 | 同一區域、同一座標。依 OSM 街道與建物輪廓繪製，缺漏的街屋沿路補繪，高度部分依樓層估計。地面取樣約為每像素 2.5 公尺。 |
-| 原版三座地景 | 保留第一版中正橋、頂溪站、樂華夜市的獨立水平切片與互動檢視器。 |
+| 低精度基準 | 沿用前版高精度的 17,305 筆國土測繪中心衍生建物輪廓、資料集高度、182 筆 OSM 補充輪廓，以及前版的窗格、屋頂設備和地標模型。 |
+| 特色高精度 | 使用相同地理座標與建物資料。低矮街屋有沿平面輪廓形成的斜屋頂，公寓有騎樓、外凸陽台或屋頂棚架，高樓分出基座和退台；窗框、店棚與金屬鐵皮使用不同材質。 |
+| 初版三座地景 | 保留中正橋、頂溪站、樂華夜市最早的獨立水平切片檢視器。 |
+
+**保福宮**的廟殿有雙層歇山屋頂、上翹屋脊、廊柱、匾額與燈籠。**中正橋**沿跨河道路配置拱肋、吊索和步道。**頂溪站**以拱形雨棚、開口階梯與二號出口牌辨識。**樂華夜市**有入口招牌、傾斜條紋棚、攤車與燈籠。廟型與橋型參考地方資料，裝飾、立面、騎樓、攤位及個別屋頂是像素美術詮釋。[新北市觀光旅遊網・保福宮](https://newtaipei.travel/zh-tw/attractions/detail/110192) · [臺北市新建工程處・中正橋](https://nco.gov.taipei/News_Content.aspx?n=BB8CF6F431E10630&s=29D53B5AD13CB034)
 
 點選地標可移動鏡頭。切換精度時會保留所在位置、角度與縮放。拖曳平移，Shift 加拖曳旋轉，滾輪或雙指縮放。可切換俯視、開關走讀線或回到全區。地圖取得焦點後，可用方向鍵平移、Q/E 旋轉、加減鍵縮放、Home 回全區。各地標附 Google Maps 與 Google 地球 3D 實景連結。
 
@@ -34,9 +36,9 @@ GitHub Pages 以 `gh-pages` 分支根目錄發布。該分支的檔案對應 `ma
 
 ## 重建
 
-全區地圖的座標以永和附近為原點，轉成公尺。程式會重接跨圖磚的建物輪廓，依地理範圍裁切，分開輸出高、低精度建物，共用地理座標、橋體與植栽。小物件只在靠近時繪製。全區地圖所需的靜態檔案已包含於 `dist/city/`。
+全區地圖的座標以永和附近為原點，轉成公尺。程式會重接跨圖磚的建物輪廓，依地理範圍裁切，分開輸出基準與特色版建物、地標，兩版共用地理座標、道路與植栽。小物件只在靠近時繪製。全區地圖所需的靜態檔案已包含於 `dist/city/`。
 
-下載上列 OSM 快照的五個 `elements/part-*.parquet` 及三維建物資料集的 `nlsc-new-taipei.pmtiles`，執行下列指令。
+下載上列 OSM 快照的五個 `elements/part-*.parquet` 及三維建物資料集的 `nlsc-new-taipei.pmtiles`，並安裝 Noto Sans CJK TC 粗體字型（NotoSansCJK-Bold.ttc）以繪製招牌，再執行下列指令。
 
 ```sh
 python3 -m pip install duckdb 'shapely>=2.1' numpy pillow pmtiles mapbox-vector-tile
