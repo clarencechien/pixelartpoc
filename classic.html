@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="google-maps-browser-key" content="">
+<meta name="theme-color" content="#f6f4e9"><title>永和散策｜像素地誌 Pixel Atlas</title>
+<link rel="icon" href="assets/logo-icon.png"><link rel="stylesheet" href="style.css">
+<script defer src="atlas.js"></script>
+<script defer src="real-world.js"></script>
+</head>
+<body>
+<header class="mast"><div class="wordmark"><span class="brand-icon"><img src="assets/logo-icon.png" alt=""></span><b>像素地誌</b><span class="latin">PIXEL ATLAS</span></div><a class="city-back" href="./">回大永和全圖</a><div class="mast-right"><span class="locator">⌖</span> 台灣 <i>/</i> 新北市</div></header>
+<main>
+<aside class="guide">
+  <div class="intro"><p class="overline"><span></span> DISTRICT FIELD GUIDE</p><h1>永和散策<span>Yonghe District</span></h1><p class="summary">從新店溪畔到夜市巷口，<br>用像素走讀永和的日常風景。</p></div>
+  <section class="index"><div class="section-title"><h2>地標目錄</h2><span>LANDMARKS</span></div><nav id="places" aria-label="地標目錄"></nav></section>
+  <section class="note"><div class="section-title"><h2>地標筆記</h2><span>FIELD NOTES</span></div><p id="description"></p><div class="compare"><a id="google" target="_blank" rel="noopener">Google Maps <span aria-hidden="true">↗</span></a><a id="earth" target="_blank" rel="noopener">Google 地球 3D <span aria-hidden="true">↗</span></a></div></section>
+</aside>
+<section class="stage" aria-label="互動像素地圖">
+  <div class="stage-bar"><div class="map-title"><span class="signal"></span><span>街景檢視器</span><b>MAP VIEW</b></div><button id="help" aria-label="操作說明" title="操作說明" aria-expanded="false">?</button></div>
+  <div id="viewport" tabindex="0" aria-label="像素模型，可拖曳旋轉，方向鍵旋轉或平移，加減鍵縮放" aria-describedby="instructions">
+    <canvas id="map"></canvas>
+    <div class="top-tools"><div class="modes" role="group" aria-label="地圖視角"><button id="iso" aria-pressed="true">立體</button><button id="plan" aria-pressed="false">俯視</button></div><button id="labels" class="icon-btn" title="顯示地標" aria-label="顯示地標" aria-pressed="true"></button></div>
+    <div class="compass" aria-label="指北針"><b>N</b><span id="needle"></span></div>
+    <div id="pin"><span id="pin-no"></span><b id="pin-name"></b></div>
+    <div id="loading" role="status">載入像素圖層中…</div>
+    <div id="help-panel" hidden><b>地圖操作</b><p id="instructions">拖曳旋轉，Shift ＋ 拖曳平移。滾輪或雙指縮放。鍵盤可用左右鍵旋轉、Shift ＋ 方向鍵平移，Home 鍵重設。</p><p>街道與已登錄建築輪廓取自 OpenStreetMap。橋體細節、河寬、未登錄建物與部分樓高為像素示意。</p></div>
+    <div class="scene-caption"><span id="scene-kind"></span><strong id="scene-en"></strong></div>
+    <div class="dock"><div><button id="left" aria-label="向左旋轉" title="向左旋轉">↶</button><button id="right" aria-label="向右旋轉" title="向右旋轉">↷</button></div><div><button id="out" aria-label="縮小" title="縮小">−</button><button id="in" aria-label="放大" title="放大">＋</button></div><button id="reset" aria-label="重設視角" title="重設視角"></button></div>
+  </div>
+  <footer class="stage-foot"><span id="coords"></span><span id="scale"></span><a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">© OpenStreetMap</a></footer>
+</section>
+</main>
+<dialog id="real-dialog" aria-labelledby="real-title"><div class="real-bar"><b id="real-title">Google Maps 3D 實景</b><button id="real-close" aria-label="關閉實景">關閉</button></div><div id="real-map"></div><p id="real-status" role="status"></p><a id="earth-fallback" target="_blank" rel="noopener">在 Google 地球開啟 ↗</a></dialog>
+</body></html>
