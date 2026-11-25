@@ -2,7 +2,7 @@
 from PIL import Image,ImageDraw
 from pathlib import Path
 D=Path(__file__).resolve().parents[1]/'dist/assets'
-for name in ['bridge','dingxi','lehua','baofu','logo']:
+for name in ['bridge','dingxi','lehua','baofu','kawabata','renai','logo']:
     im=Image.new('RGBA',(56,48));p=ImageDraw.Draw(im)
     def box(points,color):p.rectangle(points,fill=color)
     def poly(points,color):p.polygon(points,fill=color)
@@ -19,16 +19,31 @@ for name in ['bridge','dingxi','lehua','baofu','logo']:
             line(path,'#596953',3);line(path,shade,2)
             for x,y,bot in [(12,15,24),(19,11,21),(26,9,18),(32,10,16)]:line([(x+off,y+1),(x+off,bot)],shade)
     elif name=='dingxi':
-        poly([(4,31),(31,20),(52,29),(24,42)],'#aaa98a')
-        poly([(8,21),(30,12),(48,19),(25,30)],'#a0b88a')
-        poly([(8,21),(25,28),(25,39),(8,32)],'#b29874')
-        poly([(25,28),(48,18),(48,29),(25,39)],'#466e67')
-        for x,y in [(28,28),(34,25),(40,22)]:poly([(x,y),(x+3,y-1),(x+3,y+4),(x,y+6)],'#a1c2ac')
-        poly([(5,20),(29,9),(51,18),(26,30)],'#40716b')
-        poly([(5,18),(29,7),(51,16),(26,27)],'#9bbba1')
-        for x in range(3):line([(12+x*6,16-x*3),(30+x*6,23-x*3)],'#c1cba6')
-        box((11,27,15,33),'#566c58');box((48,26,49,36),'#6e755e')
-        box((45,19,52,26),'#b67e41');box((46,19,51,24),'#edb65a');box((48,20,49,23),'#f7e4a8')
+        poly([(8,9),(26,4),(43,9),(27,15)],'#d9ccae')
+        poly([(8,9),(27,15),(27,40),(8,33)],'#bcb39e')
+        poly([(27,15),(43,9),(43,34),(27,40)],'#a59a86')
+        for y in (14,20,26):
+            for x in (12,18):box((x,y+(x-12)//3,x+3,y+3+(x-12)//3),'#647c7b')
+            line([(29,y+3),(40,y-1)],'#647c7b',2)
+        poly([(24,31),(44,24),(48,26),(27,34)],'#d9c793')
+        poly([(28,33),(44,28),(44,34),(28,39)],'#374f50')
+        box((46,24,47,35),'#767d73');box((44,21,50,25),'#466482')
+    elif name=='kawabata':
+        poly([(3,35),(42,19),(54,25),(17,41)],'#8bb6a6')
+        for x,y in [(9,28),(24,22),(39,16)]:
+            box((x,y,x+2,y+8),'#b5af94');box((x+6,y+1,x+8,y+8),'#a9a78c')
+            line([(x+1,y+5),(x+4,y+2),(x+7,y+5)],'#c5bfa0',2)
+        poly([(2,27),(44,10),(53,14),(11,31)],'#ddd0ac')
+        line([(10,31),(53,14)],'#63786b',2)
+        for x in range(7,48,5):box((x,26-(x-7)*2//5,x+1,29-(x-7)*2//5),'#a49d86')
+    elif name=='renai':
+        poly([(2,29),(31,12),(54,23),(25,41)],'#91ac76')
+        p.ellipse((15,21,39,31),fill='#dbca9e')
+        p.ellipse((18,23,36,29),fill='#94b879')
+        for x,y in [(10,25),(17,21),(34,18),(42,21),(43,27)]:
+            box((x,y,x+1,y+4),'#887958')
+            p.ellipse((x-3,y-5,x+3,y+1),fill='#577e62')
+        poly([(9,30),(16,26),(21,28),(14,33)],'#a5684d')
     elif name=='lehua':
         poly([(4,34),(29,22),(51,31),(25,43)],'#a8aa87')
         for x,y in [(10,24),(24,30),(44,21)]:box((x,y,x+1,y+10),'#645a4a')

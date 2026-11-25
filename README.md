@@ -1,6 +1,6 @@
 # 大永和 · Yonghe Pixel Atlas
 
-[開啟保福宮特色版](https://clarencechien.github.io/pixelartpoc/?quality=fine&place=baofu) · [同視角低精度基準](https://clarencechien.github.io/pixelartpoc/?quality=low&place=baofu) · [永和全區](https://clarencechien.github.io/pixelartpoc/?place=all) · [初版三座地景](https://clarencechien.github.io/pixelartpoc/classic.html)
+[開啟保福宮特色版](https://clarencechien.github.io/pixelartpoc/?quality=fine&place=baofu) · [同視角低精度基準](https://clarencechien.github.io/pixelartpoc/?quality=low&place=baofu) · [永和全區](https://clarencechien.github.io/pixelartpoc/?place=all) · [地圖製作筆記](docs/making-of.md)
 
 大永和是一張可以從河岸一路移動到市區的像素地圖。首頁從保福宮看起，中正橋、頂溪站與樂華夜市仍由約 1.37 公里的走讀線串起。
 
@@ -12,11 +12,10 @@
 |---|---|
 | 低精度基準 | 沿用前版高精度的 17,305 筆國土測繪中心衍生建物輪廓、資料集高度、182 筆 OSM 補充輪廓，以及前版的窗格、屋頂設備和地標模型。 |
 | 特色高精度 | 使用相同地理座標與建物資料。低矮街屋有沿平面輪廓形成的斜屋頂，公寓有騎樓、外凸陽台或屋頂棚架，高樓分出基座和退台；窗框、店棚與金屬鐵皮使用不同材質。 |
-| 初版三座地景 | 保留中正橋、頂溪站、樂華夜市最早的獨立水平切片檢視器。 |
 
-**保福宮**的廟殿有雙層歇山屋頂、上翹屋脊、廊柱、匾額與燈籠。**中正橋**沿跨河道路配置拱肋、吊索和步道。**頂溪站**以拱形雨棚、開口階梯與二號出口牌辨識。**樂華夜市**有入口招牌、傾斜條紋棚、攤車與燈籠。廟型與橋型參考地方資料，裝飾、立面、騎樓、攤位及個別屋頂是像素美術詮釋。[新北市觀光旅遊網・保福宮](https://newtaipei.travel/zh-tw/attractions/detail/110192) · [臺北市新建工程處・中正橋](https://nco.gov.taipei/News_Content.aspx?n=BB8CF6F431E10630&s=29D53B5AD13CB034)
+**保福宮**的廟殿有雙層歇山屋頂、上翹屋脊、廊柱、匾額與燈籠。**中正橋**沿跨河道路配置拱肋、吊索和步道。**頂溪站**把二號出口嵌進永和路二段沿街大樓的一樓。**川端橋**以舊橋軸線、雙柱拱形橋墩及窄橋面辨識。**仁愛公園**可從中央草坪移到音樂台、溜冰場與城堡遊戲場。**樂華夜市**有入口招牌、傾斜條紋棚、攤車與燈籠。廟型與橋型參考地方資料，裝飾、立面、騎樓、攤位及個別屋頂是像素美術詮釋。[新北市觀光旅遊網・保福宮](https://newtaipei.travel/zh-tw/attractions/detail/110192) · [臺北市新建工程處・中正橋](https://nco.gov.taipei/News_Content.aspx?n=BB8CF6F431E10630&s=29D53B5AD13CB034)
 
-點選地標可移動鏡頭。切換精度時會保留所在位置、角度與縮放。拖曳平移，Shift 加拖曳旋轉，滾輪或雙指縮放。可切換俯視、開關走讀線或回到全區。地圖取得焦點後，可用方向鍵平移、Q/E 旋轉、加減鍵縮放、Home 回全區。各地標附 Google Maps 與 Google 地球 3D 實景連結。
+點選地標可移動鏡頭。切換精度時會保留所在位置、角度與縮放。拖曳平移，Shift 加拖曳旋轉，滾輪或雙指縮放。按「顯示走讀線」會切到涵蓋三站的俯視圖，再按一次可收起。也可以直接開啟[三站走讀線](https://clarencechien.github.io/pixelartpoc/?place=route)。地圖取得焦點後，可用方向鍵平移、Q/E 旋轉、加減鍵縮放、Home 回全區。各地標附 Google Maps 與 Google 地球 3D 實景連結。
 
 ## 本機開啟
 

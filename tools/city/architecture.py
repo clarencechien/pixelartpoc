@@ -1,4 +1,4 @@
-"""Illustrated building envelopes, street furniture and four Yonghe landmarks."""
+"""Illustrated building envelopes, street furniture and Yonghe landmarks."""
 import math
 import random
 
@@ -303,22 +303,130 @@ def temple(a,f):
         a.cylinder(f,u,18.1,[(3.65,.13),(4.05,.18)],'e9b957')
     a.cylinder(f,0,19.7,[(1.1,.65),(1.65,.78),(2,1.38),(2.7,1.55),(2.93,1.28)],'817b57')
 
-def station(a,f):
+def station(a,entrance,footprint,height):
+    """Recess Exit 2 into the mapped tower on the west side of Yonghe Road."""
+    f=Frame(*entrance,-math.pi/2)
     a.group(f.x,f.y,5)
-    a.box(f,0,0,.08,7.8,16,.45,'d6c6a3')
-    for i in range(11):a.box(f,0,5.7-i*.58,.50,5.5,.65,.19+i*.16,'9da9a3')
-    # Barrel vault: solid curved panels separated by steel ribs, open at the street end.
-    for side in [-1,1]:
-        a.box(f,side*3.35,-1,.5,.48,13,2,'77928d')
-        for v in [-6,-2,2,5.5]:a.box(f,side*3.35,v,1,.35,.38,3.6,'587975')
-    for j in range(12):
-        t0,t1=math.pi*j/12,math.pi*(j+1)/12
-        def pt(t,v):return f.at(3.95*math.cos(t),v,3.75+2.5*math.sin(t))
-        a.quad(pt(t0,-7.8),pt(t1,-7.8),pt(t1,6.5),pt(t0,6.5),shade('86beb4',.74+.24*math.sin(t0)))
-        for v in [-7.8,-3.2,1.5,6.5]:a.tube(pt(t0,v),pt(t1,v),.19,'e0debf')
-    a.sign(f,0,6.75,3.36,'頂溪站',6.9,1.48,'2e5655','fff0bc')
-    a.box(f,4.8,6.35,0,.6,.6,7.3,'5a6961')
-    a.sign(f,4.8,6.6,5.25,'2',2.0,2.05,'d58a32','fff2cb')
+    # Keep the surveyed upper envelope. Leave a street-level opening under it.
+    frontage=Polygon([f.at(u,v,0)[:2] for u,v in [(-4.2,-3.8),(4.2,-3.8),(4.2,8),(-4.2,8)]])
+    for part in geo.get_parts(footprint.difference(frontage)):
+        if part.geom_type=='Polygon':a.shell(part,.1,4.6,'a9a8a0','d1c8b6',0,2)
+    a.shell(footprint,4.6,height,'cbbfac','d8cdbc',4,92)
+    a.box(f,0,-3.4,.08,8.1,.35,4.48,'35403f')
+    for j in range(11):
+        a.box(f,0,3.5-j*.54,0,7.4,.59,.24+j*.085,'a39e90')
+    for u in (-4.15,4.15):
+        a.box(f,u,.25,.15,.48,7.1,4.6,'c3beb0')
+        a.tube(f.at(u*.87,3.9,.95),f.at(u*.87,-2.5,2.0),.095,'abb3ac')
+    a.box(f,0,2.7,4.58,10.6,4.5,.68,'adafa8')
+    for u in (-4.8,4.8):
+        a.box(f,u,4.2,.08,.7,1.0,4.52,'aba9a0')
+        a.box(f,u,4.78,2.7,.67,.15,1.16,'64797d')
+    for u in range(-4,5):
+        a.box(f,u,2.8,4.49,.15,3.9,.15,'7d817a')
+    a.sign(f,0,5.03,3.59,'頂溪站',8.9,1.15,'344b52','f4e0aa')
+    a.box(f,5.6,4.7,.12,.38,.38,4.9,'767c79')
+    a.sign(f,5.6,4.82,4.4,'2',1.27,1.30,'305476','fff2cc')
+
+
+def kawabata(a,path):
+    """Six-metre walkway on paired piers along the historic bridge alignment."""
+    def frame_at(distance):
+        point=path.interpolate(distance)
+        v=path.interpolate(min(path.length,distance+.3))
+        u=path.interpolate(max(0,distance-.3))
+        return Frame(point.x,point.y,math.atan2(v.y-u.y,v.x-u.x)-math.pi/2)
+    n=math.ceil(path.length/3.5)
+    for j in range(n):
+        f=frame_at((j+.5)*path.length/n)
+        a.group(f.x,f.y,5)
+        length=path.length/n+.09
+        a.box(f,0,0,8.75,6,length,.54,'d5cbb2')
+        for u in (-2.23,2.23):
+            a.box(f,u,0,7.4,.4,length,1.40,'65766d')
+            a.box(f,u,0,7.35,.72,length,.2,'617065')
+        for u in (-2.88,2.88):
+            a.box(f,u,0,9.27,.38,.52,1.32,'dbd6bd')
+            for z in (9.66,10.22):a.box(f,u,0,z,.19,length,.14,'a4ae9f')
+            a.box(f,u,0,10.55,.48,.63,.20,'f0e8cf')
+    for j in range(1,10):
+        f=frame_at(j*path.length/10)
+        a.group(f.x,f.y,5)
+        a.box(f,0,0,.15,7.8,3.85,.7,'8e978b')
+        for u in (-2.03,2.03):
+            a.box(f,u,0,.78,1.55,2.8,5.45,'adaf96')
+        for k in range(14):
+            p,q=math.pi*k/14,math.pi*(k+1)/14
+            u,v=2.02*math.cos(p),2.02*math.cos(q)
+            z,h=4.68+1.87*math.sin(p),4.68+1.87*math.sin(q)
+            for side in (-1.32,1.32):
+                a.face(f,[(u,side,z),(v,side,h),(v,side,7.44),(u,side,7.44)],'b6b6a0')
+            a.face(f,[(u,-1.32,z),(v,-1.32,h),(v,1.32,h),(u,1.32,z)],'929b8b')
+        a.box(f,0,0,7.08,6.45,3.12,.38,'c0bfaa')
+
+
+def renai(a,features):
+    stage=features[556975004].centroid
+    seats=features[1245570809].centroid
+    angle=math.atan2(seats.y-stage.y,seats.x-stage.x)-math.pi/2
+    f=Frame(stage.x,stage.y,angle)
+    a.group(f.x,f.y,5)
+    a.box(f,0,0,.12,18,14,1.08,'ab9784')
+    a.box(f,0,-5.3,1.2,18,1.2,5.1,'4a6772')
+    for u in (-8.6,8.6):
+        a.box(f,u,0,1.2,1.25,10,5.5,'c36a55')
+        for v in (-3,-1,1,3):a.box(f,u,v,1.3,1.45,.61,5.25,'d6d9ce')
+    for k in range(14):
+        x=-10+k*20/14;xx=x+20/14
+        z=lambda u:6.6+1.75*(1-(u/10)**2)
+        a.face(f,[(x,-7,z(x)),(xx,-7,z(xx)),(xx,6,z(xx)),(x,6,z(x))],'cad4cd')
+        a.face(f,[(x,6,z(x)),(xx,6,z(xx)),(xx,6,z(xx)-.75),(x,6,z(x)-.75)],'729197')
+    for row in range(7):
+        radius=12.8+2.8*row
+        for k in range(20):
+            if k in (5,14):continue
+            t=(k-9.5)*.074
+            u,v=radius*math.sin(t),radius*math.cos(t)
+            bench=Frame(*f.at(u,v,0)[:2],angle-t)
+            a.box(bench,0,0,.16,radius*.074,2.8,.22+row*.19,'b2aaa0')
+            a.box(bench,0,0,.45+row*.19,radius*.063,.75,.32,'586665')
+    rink=features[556975017]
+    a.group(rink.centroid.x,rink.centroid.y,5)
+    a.shell(rink,.10,.32,'bc9279','c4886e',0,0)
+    for gap in (1.2,3.1):
+        inner=rink.buffer(-gap)
+        coords=list(inner.exterior.coords)
+        for p,q in zip(coords,coords[1:]):
+            a.tube((*p,.40),(*q,.40),.20,'f3dfb0',4)
+    play_area=features[1245570785]
+    playground=play_area.representative_point()
+    a.group(playground.x,playground.y,5)
+    a.shell(play_area,.12,.36,'b1a386','c3a678',0,0)
+    safety_mat=play_area.buffer(-2.4)
+    if not safety_mat.is_empty:a.shell(safety_mat,.36,.46,'afa188','b3a58c',0,0)
+    f=Frame(playground.x,playground.y,-.28)
+    a.group(f.x,f.y,5)
+    for u in (-3.7,3.7):
+        a.box(f,u,0,.12,3.4,3.4,2.05,'b77c50')
+        for x in (-1.4,1.4):
+            for y in (-1.4,1.4):a.box(f,u+x,y,2.15,.24,.24,2.18,'a0854d')
+        a.gable(f,u,0,4.35,4.05,4.05,1.35,'a75c4d')
+    a.box(f,0,0,1.78,5.5,1.6,.44,'c19057')
+    a.face(f,[(2.75,1.7,2.12),(4.65,1.7,2.12),(4.65,5.9,.2),(2.75,5.9,.2)],'e8b15d')
+    for v in (-1.3,1.3):
+        a.box(f,0,v,2.55,4.5,.13,.16,'947453')
+        for u in (-1.8,-.9,0,.9,1.8):a.box(f,u,v,1.98,.14,.16,.65,'b09161')
+    for i in range(5):
+        a.box(f,-3.7,1.8+i*.48,.46,2.15,.52,1.55-i*.28,'bc945c')
+    # A low slide and climbing ladder share the opposite tower.
+    for u in (2.64,4.76):a.tube(f.at(u,1.7,2.42),f.at(u,5.9,.72),.14,'c97742')
+    for fid in (1245570801,1245570793,1245570781):
+        g=features[fid];p=g.centroid;f=Frame(p.x,p.y)
+        a.group(f.x,f.y,5)
+        for u in (-2.5,2.5):
+            for v in (-2,2):a.box(f,u,v,.15,.32,.32,3,'917355')
+        a.gable(f,0,0,3.18,6.7,5.8,1.25,'68877b')
+
 
 def market(a,paths,mask,entrance):
     rng=random.Random(424)

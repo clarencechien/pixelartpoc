@@ -67,6 +67,8 @@ def paint(poly,c):
     draw.polygon(coords(poly.exterior),fill=color(c))
 def line(p,c,w):
     draw.line([raster(x,y) for x,y in p],fill=color(c),width=max(1,round(w/scale)),joint='curve')
+mapped_features={}
+historic_bridge=[]
 roads=[]; buildings=[]; green=[]; water=[]; courts=[]; points=[]; markets=[]; other=[]
 widths={'motorway':16,'trunk':14,'primary':15,'secondary':13,'tertiary':10,'residential':6,'service':4,'living_street':6,'unclassified':6,'cycleway':3,'pedestrian':4,'footway':2.1,'path':1.8,'steps':2}
 for fid,typ,tags,wkb in rows:
@@ -74,6 +76,10 @@ for fid,typ,tags,wkb in rows:
     if not area.intersects(geom):continue
     if not geom.is_valid:geom=geo.make_valid(geom)
     geom=geom.intersection(area)
+    if geom.geom_type=='Polygon' and (fid in (233926867,556975004,1245570809,556975017,1245570785,1245570801,1245570793,1245570781) or tags.get('natural')=='wood'):
+        mapped_features[fid]=geom
+    if tags.get('name')=='川端橋' and tags.get('bridge')=='yes' and geom.geom_type=='LineString':
+        historic_bridge.append(geom)
     h=tags.get('highway','').removesuffix('_link')
     if typ=='node':
         points.append((fid,tags,geom));continue
@@ -303,12 +309,15 @@ for g in pieces(park_union,'Polygon'):
         x,y=rng.uniform(l,r),rng.uniform(t,b)
         if g.contains(Point(x,y)) and not any(c.contains(Point(x,y)) for c,_ in courts if c.bounds[0]<=x<=c.bounds[2]):trees.append((x,y))
 # Store each tree as a single instance, reusing the same stack of canopy slices.
+renai=mapped_features[233926867]
+woods=unary_union([g for fid,g in mapped_features.items() if fid!=233926867 and renai.contains(g.centroid) and fid not in (556975004,1245570809,556975017,1245570785,1245570801,1245570793,1245570781)])
+open_park=renai.difference(woods).union(unary_union([mapped_features[k] for k in (556975004,1245570809,556975017,1245570785)]).buffer(2))
 tree_cells=defaultdict(bytearray)
 for x,y in trees:
     radius=rng.uniform(2.9,5.1);trunk=rng.uniform(2,3.8)
     tone=rgb(rng.choice(['739766','7c9c5c','819f65','68936d','92a766']))
     tree_cells[(math.floor(x/256),math.floor(y/256))].extend(struct.pack(
-        '<4h4B',round(x*4),round(y*4),round(radius*4),round((trunk+radius*2)*4),*tone,0))
+        '<4h4B',round(x*4),round(y*4),round(radius*4),round((trunk+radius*2)*4),*tone,255 if open_park.contains(Point(x,y)) else 0))
 tree_spans=[];tree_count=0
 with (OUT/'trees.bin').open('wb') as f:
     for (tx,ty),buf in sorted(tree_cells.items()):
@@ -359,7 +368,7 @@ art=architecture.Artist(tri,quad,block,stack,group,decal,OUT)
 temple_site=next(g for _,tags,g in buildings if tags.get('name')=='永和保福宮')
 temple_center=temple_site.centroid
 entry=Point(*station)
-station_cut=geo.box(entry.x-4.4,entry.y-8.4,entry.x+4.6,entry.y+8.0)
+stage_site=mapped_features[556975004]
 street_graph=STRtree([g for g,w,t in drive])
 landmark_points=[temple_center,entry,Point(*xy(121.51372,25.00872)),Point(*xy(121.51555,25.02012))]
 for fid,tags,g in official+supplement:
@@ -368,11 +377,14 @@ for fid,tags,g in official+supplement:
     ctr=g.centroid
     near=any(ctr.distance(point)<195 for point in landmark_points)
     road=drive[int(street_graph.nearest(ctr))][0]
-    clipped=g.difference(station_cut) if station_cut.intersects(g) else g
-    for part in pieces(clipped,'Polygon'):
-        if part.area>=6:architecture.apartment(art,fid,tags,part,max(2,min(175,precise_height)),road,near)
+    if g.covers(entry) and tags.get('nlsc'):
+        architecture.station(art,station,g,precise_height)
+        continue
+    if g.intersection(stage_site).area>g.area*.45:continue
+    architecture.apartment(art,fid,tags,g,max(2,min(175,precise_height)),road,near)
 architecture.temple(art,architecture.Frame(temple_center.x,temple_center.y))
-architecture.station(art,architecture.Frame(*station,.05))
+architecture.renai(art,mapped_features)
+architecture.kawabata(art,geo.line_merge(geo.union_all(historic_bridge)))
 architecture.market(art,market_street,market,xy(121.51399,25.00867))
 architecture.bridge(art,p0,p1,elevated)
 art.save_signs()

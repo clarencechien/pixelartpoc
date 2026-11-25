@@ -4,11 +4,11 @@
 <title>大永和｜像素地誌 Pixel Atlas</title><link rel="icon" href="assets/logo-icon.png"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="district.css">
 <script type="module" src="district.js"></script></head>
 <body>
-<header class="mast"><div class="wordmark"><span class="brand-icon"><img src="assets/logo-icon.png" alt=""></span><b>像素地誌</b><span class="latin">PIXEL ATLAS</span></div><a class="classic-link" href="classic.html">初版・三座地景 ↗</a></header>
+<header class="mast"><div class="wordmark"><span class="brand-icon"><img src="assets/logo-icon.png" alt=""></span><b>像素地誌</b><span class="latin">PIXEL ATLAS</span></div><a class="guide-link" href="https://github.com/clarencechien/pixelartpoc/blob/main/docs/making-of.md">地圖製作筆記</a></header>
 <main><aside class="guide">
 <div class="intro"><p class="overline"><span></span> DISTRICT FIELD GUIDE</p><h1>大永和<span>Greater Yonghe</span></h1><p class="summary">從保福宮的燕尾屋脊，到永平路的<br>夜市棚架，近看永和街頭的形狀。</p></div>
 <section class="index"><div class="section-title"><h2>地標走讀</h2><span>LANDMARKS</span></div><nav id="places" aria-label="前往地標"></nav></section>
-<section class="note"><div class="section-title"><h2 id="note-title">全區筆記</h2><span>FIELD NOTES</span></div><p id="description">新店溪圍出永和的北側輪廓。選一個地標靠近街區，或直接拖曳地圖，探索廟埕、河岸與夜市之間的巷弄。</p><div class="compare"><a id="google" rel="noopener" target="_blank" href="https://www.google.com/maps/search/?api=1&amp;query=永和區">Google Maps ↗</a><a id="earth" rel="noopener" target="_blank" href="https://earth.google.com/web/@25.009,121.515,15a,3800d,35y,30h,55t,0r">Google 地球 3D ↗</a></div></section>
+<section class="note"><div class="section-title"><h2 id="note-title">全區筆記</h2><span>FIELD NOTES</span></div><p id="description">新店溪圍出永和的北側輪廓。選一個地標靠近街區，或直接拖曳地圖，探索廟埕、河岸與夜市之間的巷弄。</p><div id="park-stops" aria-label="近看園內設施" hidden></div><div class="compare"><a id="google" rel="noopener" target="_blank" href="https://www.google.com/maps/search/?api=1&amp;query=永和區">Google Maps ↗</a><a id="earth" rel="noopener" target="_blank" href="https://earth.google.com/web/@25.009,121.515,15a,3800d,35y,30h,55t,0r">Google 地球 3D ↗</a></div></section>
 </aside>
 <section class="stage" aria-label="永和連續地圖"><div class="stage-bar"><div class="map-title"><span class="signal"></span>永和全區圖 <b>DISTRICT MAP</b></div><button id="help" aria-label="操作說明" aria-expanded="false">?</button></div>
 <div id="viewport" tabindex="0" aria-label="可平移、旋轉與縮放的永和像素地圖" aria-describedby="instructions"><canvas id="map"></canvas>
@@ -16,7 +16,7 @@
 <div class="compass" aria-label="指北針"><b>N</b><span id="needle"></span></div>
 <div id="pins" aria-label="地圖上的地標"></div>
 <div id="loading" role="status">展開永和街廓中…</div>
-<div id="help-panel" hidden><b>地圖操作</b><p id="instructions">拖曳平移，Shift 加拖曳可旋轉。滾輪或雙指縮放。方向鍵平移，Q、E 旋轉，Home 回全區。</p><p>切換精度會保留鏡頭。低精度沿用前版高精度。切到特色版，可看見重簷廟殿、退台大樓、圓角陽台與街頭遮棚。虛線沿道路串起中正橋、頂溪和樂華夜市，供地圖走讀。</p><p id="evidence"></p></div>
+<div id="help-panel" hidden><b>地圖操作</b><p id="instructions">拖曳平移，Shift 加拖曳可旋轉。滾輪或雙指縮放。方向鍵平移，Q、E 旋轉，Home 回全區。</p><p>切換精度會保留鏡頭。低精度沿用前版高精度。切到特色版，可看見重簷廟殿、退台大樓、圓角陽台與街頭遮棚。按「顯示走讀線」，地圖會拉到能看見中正橋、頂溪站與樂華夜市的位置。點地標可以近看，再按「隱藏走讀線」即可收起虛線。</p><p id="evidence"></p></div>
 <div class="scene-caption"><span id="scene-kind">全區俯瞰</span><strong id="scene-en">Yonghe District</strong></div>
-<div class="dock"><button id="route" class="text-tool" aria-pressed="true">走讀線</button><div><button id="left" aria-label="向左旋轉" title="向左旋轉">↶</button><button id="right" aria-label="向右旋轉" title="向右旋轉">↷</button></div><div><button id="out" aria-label="縮小" title="縮小">−</button><button id="in" aria-label="放大" title="放大">＋</button></div></div>
+<div class="dock"><button id="route" class="text-tool" aria-pressed="false" aria-controls="journey" disabled>顯示走讀線</button><div><button id="left" aria-label="向左旋轉" title="向左旋轉">↶</button><button id="right" aria-label="向右旋轉" title="向右旋轉">↷</button></div><div><button id="out" aria-label="縮小" title="縮小">−</button><button id="in" aria-label="放大" title="放大">＋</button></div></div>
 </div><footer class="stage-foot"><span id="coords">新北市 · 永和區</span><span id="scale"></span><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a><a href="https://huggingface.co/datasets/yhzkiki/taiwan-nlsc-buildings" target="_blank" rel="noopener" title="內政部國土測繪中心三維建物模型與高度資料">建物 · 國土測繪中心</a></footer></section></main></body></html>
