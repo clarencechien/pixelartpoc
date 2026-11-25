@@ -172,7 +172,7 @@ export async function loadDistrict(canvas,initialFine){
         }
         attrs.forEach(i=>gl.disableVertexAttribArray(i));
       }
-      drawTrees(use,cam,w,h,true,data.treeCells,visible);
+      drawTrees(use,cam,w,h,fine,data.treeCells,visible);
     }
     return {data,draw,prepare,flat:false};
   }catch(error){console.warn('Using flat district view',error);return flatView();}

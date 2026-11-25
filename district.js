@@ -1,22 +1,27 @@
 import {loadDistrict} from './district-render.js';
 
 const places=[
-  {id:'bridge',name:'中正橋',en:'Zhongzheng Bridge',kind:'河岸地標',lon:121.51555,lat:25.02012,z:49,span:310,note:'白色橋拱跨過新店溪。往南平移越過河濱，再沿永和路走，就是頂溪站。'},
-  {id:'dingxi',name:'頂溪站',en:'Dingxi Station',kind:'捷運街角',lon:121.515482,lat:25.014196,z:7,span:122,note:'二號出口位在永和路二段。從這裡往北接中正橋，往南則能沿著商店街走到樂華夜市。'},
-  {id:'lehua',name:'樂華夜市',en:'Lehua Night Market',kind:'夜市街區',lon:121.51399,lat:25.00867,z:8.7,span:98,note:'永平路上的彩色棚架沿街彎進街區。沿路找夜市入口的紅底招牌、斜面遮棚和攤前的燈籠。'},
-  {id:'baofu',name:'保福宮',en:'Baofu Temple',kind:'寺廟建築',lon:121.50864028,lat:25.01319537,z:23,span:118,note:'從仁愛路看進廟埕，屋簷前低後高。旋轉鏡頭，可以看到三進廟殿的層次、上翹的屋脊、廊柱和簷下燈籠。'}
+  {id:'bridge',pitch:.67,angle:-1.02,lift:25,name:'中正橋',en:'Zhongzheng Bridge',kind:'河岸地標',lon:121.51555,lat:25.02012,z:49,span:310,note:'白色橋拱跨過新店溪。往南平移越過河濱，再沿永和路走，就是頂溪站。'},
+  {id:'dingxi',pitch:.67,angle:.98,lift:6,name:'頂溪站',en:'Dingxi Station',kind:'捷運街角',lon:121.515482,lat:25.014196,z:7,span:70,note:'永和路二段 233 號的二號出口嵌在沿街大樓的一樓。往站名牌下方看，可以找到騎樓裡的入口和階梯。'},
+  {id:'lehua',pitch:.75,angle:1.20,lift:6,name:'樂華夜市',en:'Lehua Night Market',kind:'夜市街區',lon:121.51399,lat:25.00867,z:8.7,span:98,note:'永平路上的彩色棚架沿街彎進街區。沿路找夜市入口的紅底招牌、斜面遮棚和攤前的燈籠。'},
+  {id:'baofu',pitch:.59,angle:-.42,lift:11,name:'保福宮',en:'Baofu Temple',kind:'寺廟建築',lon:121.50864028,lat:25.01319537,z:23,span:118,note:'從仁愛路看進廟埕，屋簷前低後高。旋轉鏡頭，可以看到三進廟殿的層次、上翹的屋脊、廊柱和簷下燈籠。'},
+  {id:'kawabata',pitch:.50,angle:.89,lift:8,name:'川端橋',en:'Kawabata Bridge',kind:'歷史橋梁',lon:121.51605,lat:25.02027,z:10,span:162,note:'新中正橋上游側的川端橋保留了鋼板梁與雙柱拱形橋墩。特色版可近看兩座橋並排跨河，以及舊橋步道兩側的復古欄杆。'},
+  {id:'renai',pitch:.79,angle:-.32,lift:0,name:'仁愛公園',en:'Ren’ai Park',kind:'城市公園',lon:121.50624,lat:25.01117,z:2,span:390,note:'環形步道繞著中央草坪，西南側的音樂台面向扇形觀眾席。點選園內設施，可以近看溜冰場的跑道、音樂台的階梯座位，或遊戲場的城堡滑梯。'}
 ];
 const $=id=>document.getElementById(id);
 const viewport=$('viewport'),cam={x:0,y:0,angle:-.45,zoom:1,pitch:.68};
 const homeNote=$('description').textContent;
 const query=new URLSearchParams(location.search);
-let fine=query.get('quality')!=='low',selected=-1,showRoute=true,scene,tween,frame,homeScale=.15,ready=false;
+let fine=query.get('quality')!=='low',selected=-1,showRoute=false,routeOverview=false,returnView=null,scene,tween,frame,homeScale=.15,ready=false;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pins=[],cards=[],touches=new Map();
 const svgNS='http://www.w3.org/2000/svg';
 const lines=document.createElementNS(svgNS,'svg');
-lines.setAttribute('aria-hidden','true');lines.classList.add('journey');viewport.insertBefore(lines,$('pins'));
-const paths=[0,1].map(()=>{const p=document.createElementNS(svgNS,'path');lines.append(p);return p;});
+lines.id='journey';lines.style.display='none';lines.setAttribute('aria-hidden','true');lines.classList.add('journey');viewport.insertBefore(lines,$('pins'));
+const paths=[0,1].map(()=>{
+  const path=document.createElementNS(svgNS,'path'),halo=document.createElementNS(svgNS,'path');
+  halo.classList.add('halo');lines.append(halo,path);return [halo,path];
+});
 places.forEach((p,i)=>{
   const num=String(i+1).padStart(2,'0');
   const btn=document.createElement('button');btn.className='place';
@@ -50,15 +55,16 @@ function draw(time){
     const [x,y]=project(...world(place.lon,place.lat),scene.flat?0:place.z);
     let lift=12;for(const prior of placed)if(Math.abs(prior[0]-x)<85 && Math.abs(prior[1]-(y-lift))<27)lift+=28;
     placed.push([x,y-lift]);const pin=pins[i];
-    pin.hidden=x<12||x>w-12||y<23||y>h+3;pin.style.left=x+'px';pin.style.top=(y-lift)+'px';pin.style.setProperty('--stem',(lift-3)+'px');
+    pin.hidden=(routeOverview && i>2)||x<12||x>w-12||y<23||y>h+3;pin.style.left=x+'px';pin.style.top=(y-lift)+'px';pin.style.setProperty('--stem',(lift-3)+'px');
   });
   lines.style.display=showRoute?'':'none';
   if(showRoute)scene.data.route.forEach((segment,i)=>{
-    paths[i].setAttribute('d',segment.map(([x,y],j)=>{
+    const d=segment.map(([x,y],j)=>{
       const onBridge=i===0 && y<world(121.5156,25.0176)[1];
       const [a,b]=project(x,y,scene.flat?0:(onBridge?10:.4));
       return (j?'L':'M')+a.toFixed(1)+' '+b.toFixed(1);
-    }).join(' '));
+    }).join(' ');
+    for(const path of paths[i])path.setAttribute('d',d);
   });
   $('needle').style.transform='rotate('+Math.atan2(Math.sin(cam.angle),Math.cos(cam.angle)*cam.pitch)+'rad)';
   const meters=[5,10,20,50,100,200,500,1000].find(m=>m*cam.zoom>=28)??1000;
@@ -86,29 +92,33 @@ function homeCamera(){
 }
 function writeUrl(){
   const url=new URL(location.href);url.searchParams.set('quality',fine?'fine':'low');
-  if(selected>=0)url.searchParams.set('place',places[selected].id);else url.searchParams.set('place','all');
+  if(selected>=0)url.searchParams.set('place',places[selected].id);else url.searchParams.set('place',routeOverview?'route':'all');
   history.replaceState(null,'',url);
 }
 function updateNotes(){
   const p=places[selected];cards.forEach((b,i)=>b.setAttribute('aria-current',String(i===selected)));
   pins.forEach((b,i)=>b.classList.toggle('active',i===selected));
   $('note-title').textContent=p?p.name+'筆記':'全區筆記';$('description').textContent=p?p.note:homeNote;
-  $('scene-kind').textContent=scene?.flat?'平面備援':(p?p.kind:'全區俯瞰');
-  $('scene-en').textContent=p?p.en:'Yonghe District';
+  $('park-stops').hidden=p?.id!=='renai';
+  if(routeOverview){$('note-title').textContent='三站走讀線';$('description').textContent='從中正橋沿永和路經過頂溪站，再轉往樂華夜市，全長約 1.37 公里。點地圖上的站名可近看街景。';}
+  $('scene-kind').textContent=scene?.flat?'平面備援':(p?p.kind:(routeOverview?'三站走讀線':'全區俯瞰'));
+  $('scene-en').textContent=p?p.en:(routeOverview?'Yonghe Walk':'Yonghe District');
   const lat=p?.lat??25.009,lon=p?.lon??121.515;
   $('google').href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p?lat+','+lon:'新北市永和區');
   $('earth').href='https://earth.google.com/web/@'+lat+','+lon+',12a,'+(p?p.span:3800)+'d,35y,32h,57t,0r';
   writeUrl();
 }
 function focusPlace(i,animate=true){
-  if(!ready)return;selected=i;const p=places[i],[x,y]=world(p.lon,p.lat);
+  if(!ready)return;
+  const keepTopdown=cam.pitch===1 && !routeOverview;
+  routeOverview=false;returnView=null;selected=i;const p=places[i],[x,y]=world(p.lon,p.lat);
   updateNotes();
-  const pitch=cam.pitch===1?1:[.67,.70,.75,.59][i];
-  const angle=[-1.02,.65,1.20,-.42][i];
-  const lift=[25,7,6,11][i]*Math.sqrt(1-pitch*pitch)/pitch;
+  const pitch=keepTopdown?1:p.pitch;
+  const angle=p.angle;
+  const lift=p.lift*Math.sqrt(1-pitch*pitch)/pitch;
   go({x:x-Math.sin(angle)*lift,y:y-Math.cos(angle)*lift,angle,pitch,zoom:Math.min(12,viewport.clientWidth/p.span)},animate);
 }
-function overview(animate=true){if(!ready)return;selected=-1;updateNotes();go(homeCamera(),animate);}
+function overview(animate=true){if(!ready)return;routeOverview=false;returnView=null;selected=-1;updateNotes();go(homeCamera(),animate);}
 let qualityRequest=0;
 function qualityButtons(){
   $('fine').setAttribute('aria-pressed',String(fine));$('low').setAttribute('aria-pressed',String(!fine));
@@ -141,7 +151,32 @@ function zoomBy(factor,x=0,y=0){
 function pan(x,y){if(!ready)return;tween=null;const d=inverse(x,y);cam.x-=d[0];cam.y-=d[1];clampCenter();invalidate();}
 function turn(r){if(!ready)return;tween=null;cam.angle+=r;invalidate();}
 $('low').onclick=()=>quality(false);$('fine').onclick=()=>quality(true);$('overview').onclick=()=>overview();
-$('route').onclick=()=>{showRoute=!showRoute;$('route').setAttribute('aria-pressed',String(showRoute));invalidate();};
+function routeCamera(){
+  const points=scene.data.route.flat(),xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);
+  const west=Math.min(...xs),east=Math.max(...xs),north=Math.min(...ys),south=Math.max(...ys);
+  const zoom=Math.min((viewport.clientWidth-108)/(east-west),(viewport.clientHeight-154)/(south-north));
+  return {x:(west+east)/2,y:(north+south)/2,angle:0,pitch:1,zoom:Math.max(.05,zoom)};
+}
+function toggleRoute(animate=true){
+  if(!ready)return;
+  showRoute=!showRoute;
+  $('route').setAttribute('aria-pressed',String(showRoute));
+  $('route').textContent=showRoute?'隱藏走讀線':'顯示走讀線';
+  if(showRoute){
+    returnView={camera:{...cam},selected};
+    routeOverview=true;selected=-1;go(routeCamera(),animate);
+  }else if(routeOverview){
+    routeOverview=false;selected=returnView?.selected??-1;
+    go(returnView?.camera??homeCamera(),animate);returnView=null;
+  }
+  updateNotes();invalidate();
+}
+$('route').onclick=()=>toggleRoute();
+for(const [name,lon,lat,span] of [['露天音樂台',121.50560,25.01078,108],['溜冰場',121.505683,25.01157,116],['城堡遊戲場',121.506986,25.012221,65]]){
+  const button=document.createElement('button');button.textContent=name;
+  button.onclick=()=>{const [x,y]=world(lon,lat);go({x,y,angle:name==='露天音樂台'?2.15:-.32,pitch:.63,zoom:Math.min(12,viewport.clientWidth/span)},true);};
+  $('park-stops').append(button);
+}
 $('topdown').onclick=()=>{if(ready){tween=null;cam.pitch=cam.pitch===1?.68:1;invalidate();}};
 $('in').onclick=()=>zoomBy(1.45);$('out').onclick=()=>zoomBy(1/1.45);$('left').onclick=()=>turn(-Math.PI/8);$('right').onclick=()=>turn(Math.PI/8);
 $('help').onclick=()=>{const panel=$('help-panel');panel.hidden=!panel.hidden;$('help').setAttribute('aria-expanded',String(!panel.hidden));};
@@ -170,11 +205,11 @@ viewport.addEventListener('keydown',e=>{
   if(handlers[e.key]){e.preventDefault();handlers[e.key]();}
 });
 qualityButtons();
-let userWidth=viewport.clientWidth;
-new ResizeObserver(()=>{if(ready){const w=viewport.clientWidth;if(w!==userWidth){if(selected<0)go(homeCamera(),false);else homeCamera();userWidth=w;}invalidate();}}).observe(viewport);
+let userSize=[viewport.clientWidth,viewport.clientHeight].join();
+new ResizeObserver(()=>{if(ready){const size=[viewport.clientWidth,viewport.clientHeight].join();if(size!==userSize){const home=homeCamera();if(routeOverview)go(routeCamera(),false);else if(selected<0)go(home,false);userSize=size;}invalidate();}}).observe(viewport);
 try{
-  scene=await loadDistrict($('map'),fine);ready=true;qualityButtons();$('loading').hidden=true;go(homeCamera(),false);
+  scene=await loadDistrict($('map'),fine);ready=true;$('route').disabled=false;qualityButtons();$('loading').hidden=true;go(homeCamera(),false);
   const initial=places.findIndex(p=>p.id===query.get('place'));
-  if(initial>=0)focusPlace(initial,false);else if(query.get('place')==='all')updateNotes();else focusPlace(3,false);
+  if(initial>=0)focusPlace(initial,false);else if(query.get('place')==='route')toggleRoute(false);else if(query.get('place')==='all')updateNotes();else focusPlace(3,false);
   invalidate();
-}catch(error){console.error(error);$('loading').innerHTML='全區地圖載入失敗，<a href="classic.html">開啟原版地景</a>。';}
+}catch(error){console.error(error);$('loading').textContent='地圖載入失敗。';const retry=document.createElement('button');retry.textContent='重新載入';retry.onclick=()=>location.reload();$('loading').append(retry);}
