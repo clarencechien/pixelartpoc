@@ -8,7 +8,7 @@ from PIL import Image,ImageDraw
 
 def bake(directory):
     data=json.loads((directory/'district.json').read_text())
-    ground=Image.open(directory/'ground-fine.png').convert('RGBA')
+    ground=Image.open(directory/'ground-walk.png').convert('RGBA')
     brush=ImageDraw.Draw(ground)
     faces=[]
     dtype=np.dtype([('p','<i2',(3,)),('c','u1',(3,)),('material','u1',(3,))])

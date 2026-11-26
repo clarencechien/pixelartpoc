@@ -130,7 +130,7 @@ class Artist:
     def save_signs(self):
         self.lettering.save(self.atlas_path,optimize=True)
 
-def apartment(art,fid,t,g,h,road,close):
+def apartment(art,fid,t,g,h,road,close,walk=False):
     rnd=random.Random(fid)
     seed=fid%256
     x,y=g.centroid.coords[0]
@@ -154,13 +154,26 @@ def apartment(art,fid,t,g,h,road,close):
         step=g.buffer(-min(r*.23,2),join_style='mitre')
         if step.geom_type=='Polygon' and step.area>20:terrace=step
     def lower_shell(zend):
-        if close and w>5.8 and zend>4.8 and street.distance(g)<14 and seed%3!=0:
-            cut=Polygon([f.at(u,v,0)[:2] for u,v in [(-w*.48,.6),(w*.48,.6),(w*.48,-2.1),(-w*.48,-2.1)]])
+        if close and w>5.8 and zend>4.8 and street.distance(g)<14 and (walk or seed%3!=0):
+            recess=2.75 if walk else 2.1
+            cut=Polygon([f.at(u,v,0)[:2] for u,v in [(-w*.48,.6),(w*.48,.6),(w*.48,-recess),(-w*.48,-recess)]])
             base=g.difference(cut)
             for part in geo.get_parts(base):
                 if part.geom_type=='Polygon':art.shell(part,0,3.6,shade(wall,.77),roof,4,seed)
             for u in np.linspace(-w*.44,w*.44,max(2,round(w/4.2))):
                 art.box(f,u,-.34,0,.58,.66,3.65,shade(wall,.9))
+            if walk:
+                # One tiled pavement carries the shop bays and columns along each frontage.
+                art.box(f,0,-.36,.06,w*.96,3.7,.18,'c8bda4')
+                art.box(f,0,1.45,.08,w*.96,.26,.22,'e1d2b0')
+                bays=max(1,round(w/4.2))
+                for j in range(bays):
+                    u=w*.91*((j+.5)/bays-.5);span=w*.85/bays
+                    art.box(f,u,-recess+.10,.25,span,.28,2.55,'485b54')
+                    art.box(f,u,-recess+.28,.48,span*.78,.17,1.64,'687e77' if (seed+j)%3 else 'a18869')
+                    art.box(f,u,-recess+.38,1.88,span*.83,.16,.15,'cdc6a8')
+                    art.box(f,u,-recess+.37,.45,.18,.18,2.0,'d3c7aa')
+                art.box(f,0,-1.2,3.29,w*.97,2.8,.27,'827b64')
             art.shell(g,3.6,zend,wall,roof,4,seed)
         else:art.shell(g,0,zend,wall,roof,4,seed)
     coping_height=h
@@ -318,8 +331,22 @@ def station(a,entrance,footprint,height):
         if part.geom_type=='Polygon':a.shell(part,.1,4.6,'a9a8a0','d1c8b6',0,2)
     a.shell(footprint,4.6,height,'cbbfac','d8cdbc',4,92)
     a.box(f,0,-3.4,.08,8.1,.35,4.48,'35403f')
-    for j in range(11):
-        a.box(f,0,3.5-j*.54,0,7.4,.59,.24+j*.085,'a39e90')
+    # The street landing is raised slightly so the descending treads remain visible above the flat base.
+    a.box(f,0,5.85,.04,11.4,4.4,.24,'ccbea5')
+    a.box(f,0,4.1,.27,8.1,1.28,.45,'b3aa93')
+    for j in range(10):
+        a.box(f,0,3.38-j*.54,.05,7.4,.61,.66-j*.060,'999f96')
+    a.box(f,0,4.33,.73,7.5,.52,.08,'d8ad59')
+    for u in (-4.7,4.7):
+        a.box(f,u,5.25,.28,1.22,2.8,.10,'a6997f')
+    for u in (-3.45,0,3.45):
+        a.tube(f.at(u,4.16,1.69),f.at(u,-2.15,.98),.12,'d0cdba')
+        for v,z in ((3.9,.71),(-1.45,.19)):a.box(f,u,v,z,.17,.18,.93,'7c8982')
+    for floor in range(2):
+        for u in (-3.4,0,3.4):
+            a.box(f,u,3.68,5.6+floor*3.5,2.8,.65,2.1,'536c68')
+            a.box(f,u,4.03,5.54+floor*3.5,3.05,.35,.28,'e0d2b6')
+            a.box(f,u,4.03,5.85+floor*3.5,.22,.25,1.7,'bdbaaa')
     for u in (-4.15,4.15):
         a.box(f,u,.25,.15,.48,7.1,4.6,'c3beb0')
         a.tube(f.at(u*.87,3.9,.95),f.at(u*.87,-2.5,2.0),.095,'abb3ac')
@@ -330,7 +357,7 @@ def station(a,entrance,footprint,height):
     for u in range(-4,5):
         a.box(f,u,2.8,4.49,.15,3.9,.15,'7d817a')
     a.sign(f,0,5.03,3.59,'頂溪站',8.9,1.15,'344b52','f4e0aa')
-    a.box(f,5.6,4.7,.12,.38,.38,4.9,'767c79')
+    a.box(f,5.6,4.7,.12,.5,.5,4.9,'667976')
     a.sign(f,5.6,4.82,4.4,'2',1.27,1.30,'305476','fff2cc')
 
 
@@ -448,7 +475,26 @@ def market(a,paths,mask,entrance):
                 tint=rng.choice(['c24c3f','de9d36','428e82','527c9c','cb7146'])
                 a.box(f,0,0,.18,4.45,2.5,1.,'a46e4a')
                 a.box(f,0,.84,1.18,4.5,.85,.20,'dcc99e')
-                a.awning(f,0,-1.65,3.65,5.05,3.65,tint,True)
+                style=rng.randrange(4)
+                if style==0:
+                    # Radial umbrella with alternating canvas panels and a central mast.
+                    a.box(f,0,0,1.18,.22,.22,3.12,'736650')
+                    for j in range(8):
+                        start_angle=j*TAU/8;end_angle=(j+1)*TAU/8
+                        edge=lambda t:f.at(2.6*math.cos(t),2.05*math.sin(t),3.0)
+                        a.tri(f.at(0,0,4.17),edge(start_angle),edge(end_angle),tint if j%2 else 'edcea0')
+                elif style==1:
+                    for j in range(6):
+                        a.gable(f,(j-2.5)*.84,0,3.06,.85,3.6,1.05,tint if j%2 else 'ead3a0')
+                else:
+                    a.awning(f,0,-1.65,3.68,5.15,3.65,tint,style==2)
+                a.box(f,0,.98,.32,4.23,.28,.68,'9b654d')
+                if style%2:
+                    a.box(f,-.95,1.15,1.37,1.65,.74,.94,'76948c')
+                    a.box(f,-.95,1.16,2.28,1.85,.92,.18,'dec593')
+                else:
+                    for u in (-1.05,.45):a.cylinder(f,u,.54,[(1.39,.42),(1.72,.51),(1.88,.37)],'aea996')
+                a.box(f,1.96,1.08,1.35,.72,.28,1.21,'e5bd7e')
                 for u in (-2.1,2.1):a.box(f,u,-1.2,.2,.21,.21,3.34,'605b49')
                 a.group(f.x,f.y,6)
                 for u in [-1.25,-.4,.45,1.3]:
@@ -460,6 +506,11 @@ def market(a,paths,mask,entrance):
         a.box(f,u,0,0,.65,.75,6.3,'497968');a.box(f,u,0,0,1.0,1.1,.9,'cfb88e')
     a.sign(f,0,.35,5.0,'樂華夜市',11.8,2.85,'983f35','ffe9a5')
     a.box(f,0,0,7.86,12.4,1.18,.38,'e2ac54')
+    # Gate fascia stays readable from above; lamps hang below the paired uprights.
+    for v in (-.63,.75):
+        a.box(f,0,v,4.88,11.95,.26,.21,'eab459')
+    for u in (-5.05,5.05):
+        a.box(f,u,0,.85,.88,1.02,3.88,'813f33')
     for u in [-4.7,-3.4,3.4,4.7]:a.cylinder(f,u,0,[(4.15,.29),(4.5,.41),(4.93,.24)],'db6c3e')
 
 def bridge(a,start,end,carriageways):

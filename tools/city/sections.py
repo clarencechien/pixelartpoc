@@ -69,7 +69,8 @@ def write_section(directory, start, end, old_axis, elevated, deck, bounds, pixel
     crop = tuple((v-bounds[i%2])/pixel_size for i,v in enumerate(extent))
     plan = base.transform(((right-left)*scale,(extent[3]-extent[1])*scale),Image.Transform.EXTENT,crop,Image.Resampling.NEAREST)
     pen = ImageDraw.Draw(plan)
-    for x,y,r,h,red,green,blue,_ in struct.iter_unpack('<4h4B',(directory/'trees.bin').read_bytes()):
+    for x,y,r,h,red,green,blue,hidden in struct.iter_unpack('<4h4B',(directory/'trees.bin').read_bytes()):
+        if hidden:continue
         cx,cy=xy(x/4,y/4);radius=r/4*scale
         if -radius<cx<plan.width+radius and -radius<cy<plan.height+radius:
             pen.ellipse((cx-radius,cy-radius,cx+radius,cy+radius),fill=(red,green,blue))

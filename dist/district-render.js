@@ -96,10 +96,10 @@ function imageAt(url){
 }
 export async function loadDistrict(canvas,initialFine){
   const root=new URL('city/',import.meta.url);
-  const response=await fetch(new URL('district.json',root));if(!response.ok)throw Error('District data');
+  const response=await fetch(new URL('district.json?v=walk',root));if(!response.ok)throw Error('District data');
   const data=await response.json();
-  const ground=await imageAt(new URL('ground-fine.png',root));
-  const flatView=async()=>planar(canvas,data,[ground,await imageAt(new URL('ground-streetscape.png',root))]);
+  const flatView=async()=>planar(canvas,data,await Promise.all(
+    ['ground-fine.png','ground-streetscape.png?v=walk'].map(name=>imageAt(new URL(name,root)))));
   let gl=canvas.getContext('webgl',{alpha:true,antialias:false,depth:true,powerPreference:'high-performance',preserveDrawingBuffer:false});
   if(!gl||!window.DecompressionStream)return flatView();
   try{
@@ -107,7 +107,7 @@ export async function loadDistrict(canvas,initialFine){
     const buffers=new Map(),pending=new Map();
     async function loadMesh(name){
       const spans=data.meshes[name];
-      const result=await fetch(new URL(name+'.mesh.gz',root));if(!result.ok)throw Error('District mesh: '+name);
+      const result=await fetch(new URL(name+'.mesh.gz'+(name==='streetscape'?'?v=walk':''),root));if(!result.ok)throw Error('District mesh: '+name);
       let packed=await result.arrayBuffer();
       if(new Uint8Array(packed)[0]===31)packed=await new Response(new Blob([packed]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
       const last=spans.at(-1);if(packed.byteLength!==data.stride*(last[3]+last[4]))throw Error('Incomplete mesh');
@@ -124,8 +124,18 @@ export async function loadDistrict(canvas,initialFine){
         .catch(err=>{signRequest=null;throw err;});
       return signRequest;
     }
-    const prepare=fine=>fine?Promise.all([ensure('streetscape'),prepareSigns()]):Promise.all([ensure('fine'),ensure('baseline-props')]);
-    const treeData=fetch(new URL('trees.bin',root)).then(r=>{if(!r.ok)throw Error('Tree instances');return r.arrayBuffer();});
+    const grounds=new Map(),groundRequests=new Map();
+    function prepareGround(fine){
+      if(!groundRequests.has(fine)){
+        const url=new URL(fine?'ground-walk.png':'ground-fine.png',root);
+        const request=imageAt(url).then(img=>grounds.set(fine,texture(img)))
+          .catch(error=>{groundRequests.delete(fine);throw error;});
+        groundRequests.set(fine,request);
+      }
+      return groundRequests.get(fine);
+    }
+    const prepare=fine=>Promise.all([prepareGround(fine),...(fine?[ensure('streetscape'),prepareSigns()]:[ensure('fine'),ensure('baseline-props')])]);
+    const treeData=fetch(new URL('trees.bin?v=walk',root)).then(r=>{if(!r.ok)throw Error('Tree instances');return r.arrayBuffer();});
     const [,,trees]=await Promise.all([ensure('shared'),prepare(initialFine),treeData]);
     const drawTrees=forest(gl,gl.getExtension('ANGLE_instanced_arrays'),program,projectSource,createBuffer,trees);
     const plane=createBuffer(gl,new Float32Array([0,0,1,0,1,1,0,0,1,1,0,1]));
@@ -140,7 +150,6 @@ export async function loadDistrict(canvas,initialFine){
       }
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);return t;
     }
-    const groundTexture=texture(ground);
     function use(obj,cam,w,h){
       const u=obj.uniforms;gl.useProgram(obj.p);gl.uniform2f(u.center,cam.x,cam.y);gl.uniform2f(u.pixels,w,h);
       gl.uniform2f(u.turn,Math.cos(cam.angle),Math.sin(cam.angle));gl.uniform1f(u.zoom,cam.zoom);gl.uniform2f(u.pitch,cam.pitch,Math.sqrt(1-cam.pitch**2));
@@ -152,6 +161,7 @@ export async function loadDistrict(canvas,initialFine){
     function draw(cam,w,h,fine){
       resize(canvas,w,h);gl.viewport(0,0,canvas.width,canvas.height);
       gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);
+      const groundTexture=grounds.get(fine);
       const surfaceU=use(surface,cam,w,h);gl.uniform4fv(surfaceU.bounds,data.bounds);
       gl.bindBuffer(gl.ARRAY_BUFFER,plane);const xy=attribute(surface.p,'a_xy',2,gl.FLOAT,false,0,0);
       gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,groundTexture);gl.drawArrays(gl.TRIANGLES,0,6);gl.disableVertexAttribArray(xy);

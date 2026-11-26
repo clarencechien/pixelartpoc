@@ -6,6 +6,8 @@
 
 ![同一鏡頭下的保福宮，左為前版高精度，右為新特色版](docs/temple-comparison.webp)
 
+[查看橋頭、頂溪站與樂華夜市的同尺度街景對照](docs/making-of.md#同尺度看三段街景)
+
 ## 比較地景
 
 | 模式 | 看到的差異 |
@@ -29,7 +31,7 @@ GitHub Pages 以 `gh-pages` 分支根目錄發布。該分支的檔案對應 `ma
 
 ## 資料來源與示意範圍
 
-- 道路、地標、河道中心線、公園及 OSM 建物來自 © OpenStreetMap contributors，來源快照為 2026-09-16。原始資料和 OSM 衍生幾何依 ODbL 1.0 提供。河寬依中心線近似。[台灣 OSM Parquet 快照](https://huggingface.co/datasets/RhynoWu/taiwan-osm-parquet/tree/91d7c3441abb44deb5ec667915c160d69b712f99) · [OpenStreetMap 版權說明](https://www.openstreetmap.org/copyright)
+- 道路、地標、河道中心線、公園及 OSM 建物來自 © OpenStreetMap contributors，來源快照為 2026-09-16。原始資料和 OSM 衍生幾何依 ODbL 1.0 提供。低精度河寬依中心線近似。特色版另以 Sentinel-2 水體指數估計新店溪河面，含經處理的 Copernicus Sentinel 資料。[水體指數來源](https://huggingface.co/datasets/yhzkiki/taiwan-nlsc-imagery/blob/3ebd023f9d21c45aa13eef0afaec53ce94219169/sentinel/manifest.json) · [台灣 OSM Parquet 快照](https://huggingface.co/datasets/RhynoWu/taiwan-osm-parquet/tree/91d7c3441abb44deb5ec667915c160d69b712f99) · [OpenStreetMap 版權說明](https://www.openstreetmap.org/copyright)
 - 高精度建物取自內政部國土測繪中心三維建物模型的衍生 PMTiles，資料集於 2026-10 擷取。這次裁切的 17,305 筆建物輪廓均標示高度來源為 `reported`。資料集說明列出政府資料開放授權條款第 1 版，也註明 I3S 服務的適用性尚待確認，並請限非商業使用及保留出處。本專案為精度比較原型。像素外牆、窗戶、屋頂設備與攤位外觀屬示意。[資料集與授權說明](https://huggingface.co/datasets/yhzkiki/taiwan-nlsc-buildings/blob/8fc026a49239bb30ca64c8d2097a0adfc4e44c53/README.md)
 - 永和區外框取自 `taiwan_basecode` 的鄉鎮市區圖層，另保留河岸與中正橋接岸處。裁切後的邊界與授權文字位於 `tools/city/`。[邊界資料版本](https://github.com/kiang/taiwan_basecode/tree/1bb75f9ba7a81f201c3c5356c486f30bae961d1a/city/geo)
 

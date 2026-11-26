@@ -8,6 +8,7 @@ import struct
 from collections import Counter, defaultdict
 from nlsc import buildings_from_tiles
 import architecture
+import walkground
 from pathlib import Path
 
 import duckdb
@@ -69,6 +70,7 @@ def line(p,c,w):
     draw.line([raster(x,y) for x,y in p],fill=color(c),width=max(1,round(w/scale)),joint='curve')
 mapped_features={}
 historic_bridge=[]
+levees=[];river_bed=[]
 roads=[]; buildings=[]; green=[]; water=[]; courts=[]; points=[]; markets=[]; other=[]
 widths={'motorway':16,'trunk':14,'primary':15,'secondary':13,'tertiary':10,'residential':6,'service':4,'living_street':6,'unclassified':6,'cycleway':3,'pedestrian':4,'footway':2.1,'path':1.8,'steps':2}
 for fid,typ,tags,wkb in rows:
@@ -78,6 +80,9 @@ for fid,typ,tags,wkb in rows:
     geom=geom.intersection(area)
     if geom.geom_type=='Polygon' and (fid in (233926867,556975004,1245570809,556975017,1245570785,1245570801,1245570793,1245570781) or tags.get('natural')=='wood'):
         mapped_features[fid]=geom
+    if tags.get('man_made')=='embankment' and geom.geom_type=='LineString':
+        near_span=geom.intersection(Point(*xy(121.51566,25.01818)).buffer(420))
+        levees.extend(pieces(near_span,'LineString'))
     if tags.get('name')=='川端橋' and tags.get('bridge')=='yes' and geom.geom_type=='LineString':
         historic_bridge.append(geom)
     h=tags.get('highway','').removesuffix('_link')
@@ -91,7 +96,9 @@ for fid,typ,tags,wkb in rows:
         for g in pieces(geom,'LineString'):
             if g.length>1:roads.append((fid,h,g,w,tags))
     if tags.get('waterway')=='river':
-        for g in pieces(geom,'LineString'):water.extend(pieces(g.buffer(72).intersection(area),'Polygon'))
+        for g in pieces(geom,'LineString'):
+            band=list(pieces(g.buffer(72).intersection(area),'Polygon'));water.extend(band)
+            if tags.get('name')=='新店溪':river_bed.extend(band)
     for g in pieces(geom,'Polygon'):
         if g.area<2:continue
         if 'building' in tags and tags['building'] not in ('no','construction','roof'):
@@ -105,6 +112,7 @@ for p in pieces(area,'Polygon'):paint(p,'c7c3aa')
 for g in other:paint(g,'cbbda2')
 for g in green:paint(g,'a4bc80')
 for g in markets:paint(g,'d7b38d')
+dry_ground=ground.copy()
 for g in water:paint(g,'79b3ad')
 for g,sport in courts:
     paint(g,'bd9177' if sport in ('baseball','basketball','tennis') else '88a585')
@@ -254,6 +262,8 @@ def bake_buildings(rows,level):
     shadowed.putalpha(ground.getchannel('A'));ground.paste(shadowed,mask=shadow)
     draw=ImageDraw.Draw(ground)
 
+channel=local(shape(json.loads((HERE/'xindian-water.geojson').read_text())['geometry'])).intersection(area)
+walk_ground=walkground.river_ground(ground,dry_ground,channel,unary_union(river_bed),bounds,scale)
 base_ground=ground.copy()
 bake_buildings(buildings,2)
 low_ground=ground
@@ -312,12 +322,17 @@ for g in pieces(park_union,'Polygon'):
 renai=mapped_features[233926867]
 woods=unary_union([g for fid,g in mapped_features.items() if fid!=233926867 and renai.contains(g.centroid) and fid not in (556975004,1245570809,556975017,1245570785,1245570801,1245570793,1245570781)])
 open_park=renai.difference(woods).union(unary_union([mapped_features[k] for k in (556975004,1245570809,556975017,1245570785)]).buffer(2))
+# Leave clearance for canopies along the edges of both bridge decks.
+bridge_clearance = unary_union([g.buffer(w/2 + 5.8) for g, w, _ in elevated]
+                               + [g.buffer(8.2) for g in historic_bridge])
+clear_ground = unary_union([open_park, channel, bridge_clearance])
+geo.prepare(clear_ground)
 tree_cells=defaultdict(bytearray)
 for x,y in trees:
     radius=rng.uniform(2.9,5.1);trunk=rng.uniform(2,3.8)
     tone=rgb(rng.choice(['739766','7c9c5c','819f65','68936d','92a766']))
     tree_cells[(math.floor(x/256),math.floor(y/256))].extend(struct.pack(
-        '<4h4B',round(x*4),round(y*4),round(radius*4),round((trunk+radius*2)*4),*tone,255 if open_park.contains(Point(x,y)) else 0))
+        '<4h4B',round(x*4),round(y*4),round(radius*4),round((trunk+radius*2)*4),*tone,255 if clear_ground.covers(Point(x,y)) else 0))
 tree_spans=[];tree_count=0
 with (OUT/'trees.bin').open('wb') as f:
     for (tx,ty),buf in sorted(tree_cells.items()):
@@ -370,6 +385,8 @@ temple_center=temple_site.centroid
 entry=Point(*station)
 stage_site=mapped_features[556975004]
 street_graph=STRtree([g for g,w,t in drive])
+guide_roads=[g for g,w,t in drive if t.get('name') in ('永和路二段','永和路一段','永平路') and g.intersects(geo.box(*xy(121.5098,25.0176),*xy(121.5168,25.0083)))]
+guide_tree=STRtree(guide_roads)
 landmark_points=[temple_center,entry,Point(*xy(121.51372,25.00872)),Point(*xy(121.51555,25.02012))]
 for fid,tags,g in official+supplement:
     if temple_site.intersects(g) and temple_site.intersection(g).area>g.area*.42:continue
@@ -381,7 +398,20 @@ for fid,tags,g in official+supplement:
         architecture.station(art,station,g,precise_height)
         continue
     if g.intersection(stage_site).area>g.area*.45:continue
-    architecture.apartment(art,fid,tags,g,max(2,min(175,precise_height)),road,near)
+    frontage=guide_roads[int(guide_tree.nearest(ctr))]
+    on_walk=frontage.distance(g)<13 and xy(0,25.01755)[1]<ctr.y<xy(0,25.00812)[1]
+    architecture.apartment(art,fid,tags,g,max(2,min(175,precise_height)),frontage if on_walk else road,near or on_walk,on_walk)
+for levee in levees:
+    for (x,y),(u,v) in zip(levee.coords,list(levee.coords)[1:]):
+        length=math.hypot(u-x,v-y)
+        if length<.1:continue
+        dx,dy=(u-x)/length,(v-y)/length
+        # Face the grass slope toward the river north of the riverside road.
+        nx,ny=(-dy,dx) if dx<0 else (dy,-dx)
+        group(x,y,5)
+        quad((x,y,2.5),(u,v,2.5),(u+nx*6,v+ny*6,.15),(x+nx*6,y+ny*6,.15),'91a77d')
+        block((x+u)/2,(y+v)/2,.1,length+.2,.95,2.42,'a9aa91',math.atan2(dy,dx))
+        block((x+u)/2,(y+v)/2,2.5,length+.22,1.45,.25,'dad2af',math.atan2(dy,dx))
 architecture.temple(art,architecture.Frame(temple_center.x,temple_center.y))
 architecture.renai(art,mapped_features)
 old_axis=geo.line_merge(geo.union_all(historic_bridge))
@@ -429,6 +459,8 @@ metadata['outline']=[list(p.exterior.simplify(12).coords) for p in pieces(area,'
 
 (OUT/'district.json').write_text(json.dumps(metadata,separators=(',',':')))
 print('map dimensions',width,height,'vertices',offset,'files',[(p.name,p.stat().st_size) for p in OUT.glob('*')],flush=True)
+walk_ground.putalpha(alpha)
+walkground.sunlight(OUT,walk_ground)
 from roofmap import bake as bake_roof_map
 bake_roof_map(OUT)
 
