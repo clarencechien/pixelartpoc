@@ -15,3 +15,5 @@
 #park-stops button{font:inherit;font-size:14px;padding:4px 9px;color:#375540;background:#f4f5e9;border:1px solid #a2b39c;border-radius:4px}
 @media(max-width:760px){#places{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.place{width:100%}.scene-caption{max-width:29%}}
 @media(min-width:761px){.stage{position:sticky;top:0;align-self:start;height:calc(100svh - 65px);min-height:385px}}
+
+.stage-actions{display:flex;gap:12px;align-items:center}.stage-actions a{font-weight:650;font-size:14px;color:#365541;text-underline-offset:3px}
