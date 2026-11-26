@@ -1,5 +1,5 @@
 import {prepareSection} from './bridge-section.js?v=map';
-import {loadDistrict} from './district-render.js';
+import {loadDistrict} from './district-render.js?v=walk';
 
 const places=[
   {id:'bridge',pitch:.67,angle:-1.02,lift:25,name:'中正橋',en:'Zhongzheng Bridge',kind:'河岸地標',lon:121.51555,lat:25.02012,z:49,span:310,note:'白色橋拱跨過新店溪。往南平移越過河濱，再沿永和路走，就是頂溪站。'},
@@ -32,6 +32,15 @@ places.forEach((p,i)=>{
   const pin=document.createElement('button');pin.hidden=true;pin.className='map-pin';pin.setAttribute('aria-label','前往'+p.name);
   pin.innerHTML='<span>'+num+'</span>'+p.name;pin.onclick=()=>focusPlace(i);$('pins').append(pin);pins.push(pin);
 });
+function setLabels(visible){
+  $('labels').setAttribute('aria-pressed',String(visible));
+  $('pins').hidden=!visible;
+}
+setLabels(query.get('labels')!=='off');
+$('labels').onclick=()=>{
+  setLabels($('pins').hidden);
+  writeUrl();
+};
 function world(lon,lat){
   const d=scene.data;return [(lon-d.origin[0])*d.metersPerDegree[0],(lat-d.origin[1])*d.metersPerDegree[1]];
 }
@@ -97,6 +106,7 @@ function writeUrl(){
   const url=new URL(location.href);url.searchParams.set('quality',fine?'fine':'low');
   if(selected>=0)url.searchParams.set('place',places[selected].id);else url.searchParams.set('place',routeOverview?'route':'all');
   if(sectionSession)url.searchParams.set('section','bridges');else url.searchParams.delete('section');
+  if($('pins').hidden)url.searchParams.set('labels','off');else url.searchParams.delete('labels');
   history.replaceState(null,'',url);
 }
 function sectionCamera() {

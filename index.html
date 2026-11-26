@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#faf9f1">
-<title>大永和｜像素地誌 Pixel Atlas</title><link rel="icon" href="assets/logo-icon.png"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="district.css"><link rel="stylesheet" href="bridge-section.css?v=map">
-<script type="module" src="district.js?v=section"></script></head>
+<title>大永和｜像素地誌 Pixel Atlas</title><link rel="icon" href="assets/logo-icon.png"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="district.css?v=walk"><link rel="stylesheet" href="bridge-section.css?v=map">
+<script type="module" src="district.js?v=walk"></script></head>
 <body>
 <header class="mast"><div class="wordmark"><span class="brand-icon"><img src="assets/logo-icon.png" alt=""></span><b>像素地誌</b><span class="latin">PIXEL ATLAS</span></div><a class="guide-link" href="https://github.com/clarencechien/pixelartpoc/blob/main/docs/making-of.md">地圖製作筆記</a></header>
 <main><aside class="guide">
@@ -22,12 +22,12 @@
 </section></aside>
 <section class="stage" aria-label="永和連續地圖"><div class="stage-bar"><div class="map-title"><span class="signal"></span>永和全區圖 <b>DISTRICT MAP</b></div><div class="stage-actions"><button id="section-toggle" type="button" aria-expanded="false" aria-controls="section-panel" disabled>雙橋剖面</button><button id="help" aria-label="操作說明" aria-expanded="false">?</button></div></div>
 <div id="viewport" tabindex="0" aria-label="可平移、旋轉與縮放的永和像素地圖" aria-describedby="instructions"><canvas id="map"></canvas>
-<div class="top-tools"><div class="modes" role="group" aria-label="地景精度"><button id="low" aria-pressed="false" title="上一版高精度模型">低精度</button><button id="fine" aria-pressed="true">特色高精度</button></div><button id="topdown" class="small-tool" aria-pressed="false">俯視</button><button id="overview" class="small-tool">全區</button></div>
+<div class="top-tools"><div class="modes" role="group" aria-label="地景精度"><button id="low" aria-pressed="false" title="上一版高精度模型">低精度</button><button id="fine" aria-pressed="true">特色高精度</button></div><button id="topdown" class="small-tool" aria-pressed="false">俯視</button><button id="labels" class="small-tool" aria-label="地標標籤" aria-controls="pins" aria-pressed="true" title="顯示或隱藏地標標籤">標籤</button><button id="overview" class="small-tool">全區</button></div>
 <div class="compass" aria-label="指北針"><b>N</b><span id="needle"></span></div>
 <div id="pins" aria-label="地圖上的地標"></div>
 <div id="cut-line" aria-hidden="true" hidden><b>A</b><span></span><b>B</b></div>
 <div id="loading" role="status">展開永和街廓中…</div>
-<div id="help-panel" hidden><b>地圖操作</b><p id="instructions">拖曳平移，Shift 加拖曳可旋轉。滾輪或雙指縮放。方向鍵平移，Q、E 旋轉，Home 回全區。</p><p>切換精度會保留鏡頭。低精度沿用前版高精度。切到特色版，可看見重簷廟殿、退台大樓、圓角陽台與街頭遮棚。按「顯示走讀線」，地圖會拉到能看見中正橋、頂溪站與樂華夜市的位置。點地標可以近看，再按「隱藏走讀線」即可收起虛線。</p><p id="evidence"></p></div>
+<div id="help-panel" hidden><b>地圖操作</b><p id="instructions">拖曳平移，Shift 加拖曳可旋轉。滾輪或雙指縮放。方向鍵平移，Q、E 旋轉，Home 回全區。</p><p>切換精度會保留鏡頭。低精度沿用前版高精度。切到特色版，可看見重簷廟殿、退台大樓、圓角陽台與街頭遮棚。按「顯示走讀線」，地圖會拉到能看見中正橋、頂溪站與樂華夜市的位置。點地標可以近看，再按「隱藏走讀線」即可收起虛線。</p><p id="evidence"></p><p>特色版河面含經處理的 Copernicus Sentinel 資料。<a href="https://huggingface.co/datasets/yhzkiki/taiwan-nlsc-imagery/blob/3ebd023f9d21c45aa13eef0afaec53ce94219169/sentinel/manifest.json">水體指數影像來源</a></p></div>
 <div class="scene-caption"><span id="scene-kind">全區俯瞰</span><strong id="scene-en">Yonghe District</strong></div>
 <div class="dock"><button id="route" class="text-tool" aria-pressed="false" aria-controls="journey" disabled>顯示走讀線</button><div><button id="left" aria-label="向左旋轉" title="向左旋轉">↶</button><button id="right" aria-label="向右旋轉" title="向右旋轉">↷</button></div><div><button id="out" aria-label="縮小" title="縮小">−</button><button id="in" aria-label="放大" title="放大">＋</button></div></div>
 </div><footer class="stage-foot"><span id="coords">新北市 · 永和區</span><span id="scale"></span><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a><a href="https://huggingface.co/datasets/yhzkiki/taiwan-nlsc-buildings" target="_blank" rel="noopener" title="內政部國土測繪中心三維建物模型與高度資料">建物 · 國土測繪中心</a></footer></section></main></body></html>

@@ -17,3 +17,5 @@
 @media(min-width:761px){.stage{position:sticky;top:0;align-self:start;height:calc(100svh - 65px);min-height:385px}}
 
 .stage-actions{display:flex;gap:12px;align-items:center}.stage-actions a{font-weight:650;font-size:14px;color:#365541;text-underline-offset:3px}
+
+#pins[hidden]{display:none}@media(max-width:400px){.top-tools{left:8px;gap:3px}.small-tool{padding-inline:6px}.top-tools .modes button{padding-inline:6px}}
