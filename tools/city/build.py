@@ -163,11 +163,11 @@ def along(path,spacing,start):
             yield x0+rem*dx,y0+rem*dy,dx,dy
             rem+=spacing
         rem-=l
-def deck(path,w,z,tone):
+def deck(path,w,z,tone,emit=block,locate=group):
     for (x,y),(a,b) in zip(path.coords,list(path.coords)[1:]):
         dx,dy=a-x,b-y
         if dx==dy==0:continue
-        group((x+a)/2,(y+b)/2);block((x+a)/2,(y+b)/2,z-1.5,math.hypot(dx,dy)+.5,w,1.5,tone,math.atan2(dy,dx))
+        locate((x+a)/2,(y+b)/2);emit((x+a)/2,(y+b)/2,z-1.5,math.hypot(dx,dy)+.5,w,1.5,tone,math.atan2(dy,dx))
 
 roadtree=STRtree([r[2] for r in roads])
 elevated=[];drive=[];market_street=[]
@@ -384,7 +384,8 @@ for fid,tags,g in official+supplement:
     architecture.apartment(art,fid,tags,g,max(2,min(175,precise_height)),road,near)
 architecture.temple(art,architecture.Frame(temple_center.x,temple_center.y))
 architecture.renai(art,mapped_features)
-architecture.kawabata(art,geo.line_merge(geo.union_all(historic_bridge)))
+old_axis=geo.line_merge(geo.union_all(historic_bridge))
+architecture.kawabata(art,old_axis)
 architecture.market(art,market_street,market,xy(121.51399,25.00867))
 architecture.bridge(art,p0,p1,elevated)
 art.save_signs()
@@ -430,3 +431,6 @@ metadata['outline']=[list(p.exterior.simplify(12).coords) for p in pieces(area,'
 print('map dimensions',width,height,'vertices',offset,'files',[(p.name,p.stat().st_size) for p in OUT.glob('*')],flush=True)
 from roofmap import bake as bake_roof_map
 bake_roof_map(OUT)
+
+from sections import write_section
+write_section(OUT,p0,p1,old_axis,elevated,deck,bounds,scale)

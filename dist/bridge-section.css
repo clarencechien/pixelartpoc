@@ -1,0 +1,24 @@
+.section-page{background:#f7f7ed;color:#263f34}.mast a{text-decoration:none}.back-map{font-size:.94rem;border-bottom:1px solid #97a28f}
+.section-main{display:block;max-width:1220px;min-height:0;margin:0 auto;padding:clamp(16px,3vw,38px)}
+.section-intro{display:flex;align-items:baseline;gap:24px;flex-wrap:wrap;margin-bottom:20px}.section-intro h1{font-size:clamp(2rem,4vw,3.3rem);letter-spacing:-.045em;margin:0}.section-intro p{margin:0;color:#526453;line-height:1.7}
+.plots{display:grid;grid-template-columns:minmax(0,.73fr) minmax(0,1.27fr);gap:16px}
+.plan-card,.profile-card{overflow:hidden;border:1px solid #aabaac;border-radius:8px;background:#fffef5;min-width:0;display:flex;flex-direction:column}
+.chart-title{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #c6cdbd;padding:10px 16px;background:#eff2e6}.chart-title h2{font-size:1.02rem;margin:0}.chart-title span,.range-ends{font-size:.87rem;color:#536657}
+#plan{height:clamp(292px,39vh,425px);display:grid;place-items:center;position:relative;overflow:hidden;background-color:#e1e8d9;background-image:linear-gradient(#acbca333 1px,transparent 1px),linear-gradient(90deg,#acbca333 1px,transparent 1px);background-size:18px 18px}
+#plan-image{height:100%;max-width:100%;position:relative;touch-action:none;cursor:ns-resize;user-select:none}#plan-image img{display:block;height:100%;width:100%;image-rendering:pixelated}
+#cut-line{position:absolute;left:0;right:0;transform:translateY(-50%);display:flex;align-items:center;pointer-events:none}
+#cut-line[hidden]{display:none}#cut-line b{background:#753421;color:#fff9e7;padding:2px 5px;font:700 12px var(--mono)}
+#cut-line i{height:3px;flex:1;background:#ac492c;box-shadow:0 -1px #fff5d6,0 1px #fff5d6}.north{position:absolute;top:8px;right:8px;background:#fff9e3e6;color:#35534b;padding:3px 5px;font:700 .75rem var(--mono);pointer-events:none}
+.legend{display:flex;gap:18px;align-items:center;padding:12px 16px 0;font-size:.9rem}.legend span:before{content:"";display:inline-block;background:#3e7669;width:.87em;height:.87em;margin-right:5px;border-radius:2px}.legend span+span:before{background:#ac603e}
+#profile{display:block;width:100%;height:clamp(205px,28vh,313px);flex:1;min-height:0}
+#reading{margin:0;padding:10px 16px;min-height:42px;border-top:1px solid #dce0ce;color:#415845;line-height:1.5;font-size:.92rem}
+.cut-controls{padding:16px 19px;margin-top:15px;background:#f1f3e7;border:1px solid #bac4af;border-radius:7px}.range-head,.range-ends,.section-foot{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.range-head label{font-weight:750}.range-head output{font-variant-numeric:tabular-nums;color:#874528;font-weight:650}
+#station{width:100%;margin:7px 0 1px;height:25px;accent-color:#a75333;cursor:pointer}.range-ends{font-size:.81rem}#presets{margin-top:12px;display:flex;gap:7px;flex-wrap:wrap}
+#presets button{font-size:.9rem;background:#fcfcf2;border:1px solid #9fab96;padding:6px 11px;border-radius:5px}#presets button[aria-pressed=true]{background:#385942;color:#fffcef;border-color:#385942}
+.section-foot{margin-top:12px;font-size:.86rem;color:#5d695c;line-height:1.6}.section-foot p{margin:0}.section-foot a{white-space:nowrap}
+@media(max-width:720px){.section-main{padding:13px 10px 22px}.section-intro{display:block;margin-bottom:12px}.section-intro p{font-size:.93rem}.plots{grid-template-columns:minmax(0,.40fr) minmax(0,.60fr);gap:6px}.chart-title{padding:7px}.chart-title h2{font-size:.88rem}.chart-title span{display:none}#plan{height:260px}#profile{height:155px}.legend{padding:7px 5px 0;font-size:.75rem;gap:5px}.legend span:before{margin-right:3px}#reading{padding:6px 7px;min-height:40px;font-size:.8rem}.cut-controls{padding:10px}.section-foot{display:block}.north{right:2px;top:3px}.mast .back-map{font-size:.82rem}}
+#plan{--plan-height:clamp(292px,39vh,425px);height:var(--plan-height)}
+#plan-image{--plan-ratio:.704;width:min(100%,calc(var(--plan-height) * var(--plan-ratio)));height:auto;aspect-ratio:var(--plan-ratio)}
+@media(max-width:720px){#plan{--plan-height:260px}}
+.section-page .wordmark,.section-page .back-map{white-space:nowrap}
+@media(max-width:430px){.section-page .wordmark .latin{display:none}}

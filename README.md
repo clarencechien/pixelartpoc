@@ -1,6 +1,6 @@
 # 大永和 · Yonghe Pixel Atlas
 
-[開啟保福宮特色版](https://clarencechien.github.io/pixelartpoc/?quality=fine&place=baofu) · [同視角低精度基準](https://clarencechien.github.io/pixelartpoc/?quality=low&place=baofu) · [永和全區](https://clarencechien.github.io/pixelartpoc/?place=all) · [地圖製作筆記](docs/making-of.md)
+[開啟保福宮特色版](https://clarencechien.github.io/pixelartpoc/?quality=fine&place=baofu) · [同視角低精度基準](https://clarencechien.github.io/pixelartpoc/?quality=low&place=baofu) · [永和全區](https://clarencechien.github.io/pixelartpoc/?place=all) · [雙橋剖面](https://clarencechien.github.io/pixelartpoc/bridge-section.html) · [地圖製作筆記](docs/making-of.md)
 
 大永和是一張可以從河岸一路移動到市區的像素地圖。首頁從保福宮看起，中正橋、頂溪站與樂華夜市仍由約 1.37 公里的走讀線串起。
 

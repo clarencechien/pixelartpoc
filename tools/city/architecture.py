@@ -58,6 +58,11 @@ class Artist:
             if last:self.stack(last,ring,tone,z==profile[-1][0])
             last=ring
 
+    def pier_web(self,front,back):
+        self.quad(*front,'b6b6a0')
+        self.quad(*back,'b6b6a0')
+        self.quad(front[0],front[1],back[1],back[0],'929b8b')
+
     def shell(self,g,z0,z1,wall,roof,material,seed):
         if z1<=z0:return
         for facet in geo.get_parts(geo.constrained_delaunay_triangles(g)):
@@ -359,9 +364,9 @@ def kawabata(a,path):
             p,q=math.pi*k/14,math.pi*(k+1)/14
             u,v=2.02*math.cos(p),2.02*math.cos(q)
             z,h=4.68+1.87*math.sin(p),4.68+1.87*math.sin(q)
-            for side in (-1.32,1.32):
-                a.face(f,[(u,side,z),(v,side,h),(v,side,7.44),(u,side,7.44)],'b6b6a0')
-            a.face(f,[(u,-1.32,z),(v,-1.32,h),(v,1.32,h),(u,1.32,z)],'929b8b')
+            front=[f.at(u,-1.32,z),f.at(v,-1.32,h),f.at(v,-1.32,7.44),f.at(u,-1.32,7.44)]
+            back=[f.at(u,1.32,z),f.at(v,1.32,h),f.at(v,1.32,7.44),f.at(u,1.32,7.44)]
+            a.pier_web(front,back)
         a.box(f,0,0,7.08,6.45,3.12,.38,'c0bfaa')
 
 

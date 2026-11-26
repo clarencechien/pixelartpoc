@@ -33,6 +33,12 @@ Python 建置程式先把經緯度換成以公尺計算的平面座標，依永�
 
 程式將中正橋、頂溪站和樂華夜市對到最近的道路節點，以道路長度為主要成本，用 Dijkstra 演算法求出兩段相接的路徑。建置後把折線座標存入 `dist/city/district.json`。按「顯示走讀線」時，程式依目前螢幕大小安排俯視鏡頭，把兩段線與三站一起放進畫面。這條約 1.37 公里的線供地圖導覽，現場的人行動線與通行狀況仍要看道路標示。[開啟走讀線](https://clarencechien.github.io/pixelartpoc/?place=route) · [鏡頭與路線程式](../dist/district.js)
 
+## 雙橋剖面怎麼切
+
+俯視圖朝北，A 在西側、B 在東側。拖動紅線或滑桿時，東西向的垂直剖切面會在主跨內從永和側逐步移向臺北側。可用三個定位鍵比較舊橋墩、兩墩之間與新橋吊索。在滑桿上按方向鍵，每次移動 0.25 公尺。[開啟雙橋剖面](https://clarencechien.github.io/pixelartpoc/bridge-section.html)
+
+建置時沿用特色版的橋面、拱肋、吊索和橋墩造型，另存各個凸形構件的頂點。瀏覽器找出構件各邊與當前平面的交點，依水平方向和高度畫出截面。兩橋共用相同的水平與垂直比例。滑桿距離從本次剖切範圍的南端起算；縱軸是模型相對高度，橋墩間距為美術示意。地圖在目前模型的零點截斷，沒有河床測量資料。[剖面資料產生程式](../tools/city/sections.py) · [剖切與互動程式](../dist/bridge-section.js)
+
 ## 本機查看與重建
 
 只想查看成品，可以在儲存庫根目錄執行 `python3 -m http.server 8000 --directory dist`，瀏覽器開啟 `http://localhost:8000/`。要修改地標造型，編輯 `tools/city/architecture.py`，再用下列指令重建。第一個參數是放置 OSM Parquet 分檔的資料夾，第二個是新北市建物圖檔。招牌繪製需安裝 Noto Sans CJK TC 粗體。[原始資料下載位置](../README.md#資料來源與示意範圍)
