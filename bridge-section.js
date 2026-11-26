@@ -1,10 +1,9 @@
 const get = id => document.getElementById(id);
 const slider = get('station');
-const photo = get('plan-image');
 const canvas = get('profile');
 const ctx = canvas.getContext('2d');
 const buttons = [...get('presets').querySelectorAll('button')];
-let model, solids, frame = 0;
+let model, solids, request, onMove, frame = 0;
 
 // Every solid is a pair of matching convex rings, or one open polygon for a thin surface.
 function unpack([bridge, face, coords]) {
@@ -54,7 +53,7 @@ function intersect(solid, y) {
 
 function draw() {
   frame = 0;
-  if (!model) return;
+  if (!model || !canvas.clientWidth) return;
   const distance = slider.valueAsNumber, y = model.south-distance;
   const cuts = [];
   for (const solid of solids) {
@@ -113,36 +112,37 @@ function draw() {
 
 function update(distance) {
   slider.value=String(distance);
-  const d=slider.valueAsNumber, [,top,,bottom]=model.extent;
-  get('cut-line').style.top=((model.south-d-top)/(bottom-top)*100)+'%';
+  const d=slider.valueAsNumber;
+  onMove();
   const value='距起點 '+d+' m';
   get('chainage').value=value;slider.setAttribute('aria-valuetext','距永和側起點 '+d+' 公尺');
   for (let i=0;i<buttons.length;i++) buttons[i].setAttribute('aria-pressed',String(d===model.presets[i]));
   if (!frame) frame=requestAnimationFrame(draw);
 }
 
-function moveOnPlan(e) {
-  const r=photo.getBoundingClientRect(), [,top,,bottom]=model.extent;
-  update(Math.round((model.south-top-(e.clientY-r.top)/r.height*(bottom-top))*4)/4);
-}
-photo.addEventListener('pointerdown',e=>{
-  if (!model || !e.isPrimary || e.button!==0) return;
-  photo.setPointerCapture(e.pointerId);moveOnPlan(e);
-});
-photo.addEventListener('pointermove',e=>{if(photo.hasPointerCapture(e.pointerId)) moveOnPlan(e);});
 slider.addEventListener('input',()=>update(slider.valueAsNumber));
 new ResizeObserver(()=>{if(model && !frame) frame=requestAnimationFrame(draw);}).observe(canvas);
 
-try {
+async function load() {
   const response=await fetch('city/bridge-section.json');
   if (!response.ok) throw Error('Section data '+response.status);
-  model=await response.json();solids=model.solids.map(unpack);
-  const [left,top,right,bottom]=model.extent;
-  photo.style.setProperty('--plan-ratio',(right-left)/(bottom-top));
-  slider.max=String(model.south-model.north);slider.disabled=false;
-  buttons.forEach((button,i)=>{button.disabled=false;button.onclick=()=>update(model.presets[i]);});
-  get('cut-line').hidden=false;update(model.presets[0]);
-} catch(error) {
-  console.error(error);get('reading').textContent='雙橋模型載入失敗。';
-  const retry=document.createElement('button');retry.textContent='重新載入';retry.onclick=()=>location.reload();get('reading').append(retry);
+  model=await response.json();
+  solids=model.solids.map(unpack);
+  slider.max=String(model.south-model.north);
+  return {
+    extent:model.extent,
+    get y(){return model.south-slider.valueAsNumber;},
+    moveTo(y){update(Math.round((model.south-y)*4)/4);},
+    enable(){
+      slider.disabled=false;
+      buttons.forEach((button,i)=>{button.disabled=false;button.onclick=()=>update(model.presets[i]);});
+      update(slider.dataset.visited ? slider.valueAsNumber : model.presets[0]);
+      slider.dataset.visited='true';
+    }
+  };
+}
+export function prepareSection(moveLine) {
+  onMove=moveLine;
+  if (!request) request=load().catch(error=>{request=null;throw error;});
+  return request;
 }

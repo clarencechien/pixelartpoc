@@ -1,3 +1,4 @@
+import {prepareSection} from './bridge-section.js?v=map';
 import {loadDistrict} from './district-render.js';
 
 const places=[
@@ -13,6 +14,7 @@ const viewport=$('viewport'),cam={x:0,y:0,angle:-.45,zoom:1,pitch:.68};
 const homeNote=$('description').textContent;
 const query=new URLSearchParams(location.search);
 let fine=query.get('quality')!=='low',selected=-1,showRoute=false,routeOverview=false,returnView=null,scene,tween,frame,homeScale=.15,ready=false;
+let sectionSession=null;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pins=[],cards=[],touches=new Map();
 const svgNS='http://www.w3.org/2000/svg';
@@ -49,16 +51,17 @@ function draw(time){
     if(t>=1)tween=null;
   }
   const w=viewport.clientWidth,h=viewport.clientHeight;
-  scene.draw(cam,w,h,fine);
+  scene.draw(cam,w,h,sectionSession?.data ? true : fine);
+  placeCutLine();
   const placed=[];
   places.forEach((place,i)=>{
     const [x,y]=project(...world(place.lon,place.lat),scene.flat?0:place.z);
     let lift=12;for(const prior of placed)if(Math.abs(prior[0]-x)<85 && Math.abs(prior[1]-(y-lift))<27)lift+=28;
     placed.push([x,y-lift]);const pin=pins[i];
-    pin.hidden=(routeOverview && i>2)||x<12||x>w-12||y<23||y>h+3;pin.style.left=x+'px';pin.style.top=(y-lift)+'px';pin.style.setProperty('--stem',(lift-3)+'px');
+    pin.hidden=(sectionSession && i!==0 && i!==4)||(!sectionSession && routeOverview && i>2)||x<12||x>w-12||y<23||y>h+3;pin.style.left=x+'px';pin.style.top=(y-lift)+'px';pin.style.setProperty('--stem',(lift-3)+'px');
   });
-  lines.style.display=showRoute?'':'none';
-  if(showRoute)scene.data.route.forEach((segment,i)=>{
+  lines.style.display=showRoute&&!sectionSession?'':'none';
+  if(showRoute&&!sectionSession)scene.data.route.forEach((segment,i)=>{
     const d=segment.map(([x,y],j)=>{
       const onBridge=i===0 && y<world(121.5156,25.0176)[1];
       const [a,b]=project(x,y,scene.flat?0:(onBridge?10:.4));
@@ -93,8 +96,74 @@ function homeCamera(){
 function writeUrl(){
   const url=new URL(location.href);url.searchParams.set('quality',fine?'fine':'low');
   if(selected>=0)url.searchParams.set('place',places[selected].id);else url.searchParams.set('place',routeOverview?'route':'all');
+  if(sectionSession)url.searchParams.set('section','bridges');else url.searchParams.delete('section');
   history.replaceState(null,'',url);
 }
+function sectionCamera() {
+  const [west,north,east,south]=sectionSession.data.extent;
+  const angle=-.18, pitch=.8;
+  const width=(east-west)*Math.cos(angle)+(south-north)*Math.abs(Math.sin(angle));
+  const height=((east-west)*Math.abs(Math.sin(angle))+(south-north)*Math.cos(angle))*pitch+32;
+  return {x:(west+east)/2,y:(north+south)/2-10,angle,pitch,
+    zoom:Math.min(viewport.clientWidth*.88/width,viewport.clientHeight*.83/height)};
+}
+function placeCutLine() {
+  const data=sectionSession?.data;
+  if(!data)return;
+  const [west,,east]=data.extent, z=scene.flat?0:10;
+  const [ax,ay]=project(west,data.y,z),[bx,by]=project(east,data.y,z);
+  const style=$('cut-line').style;
+  style.left=ax+'px';style.top=ay+'px';style.width=Math.hypot(bx-ax,by-ay)+'px';
+  style.transform='rotate('+Math.atan2(by-ay,bx-ax)+'rad)';
+}
+async function openSection() {
+  if(!ready || sectionSession)return;
+  const session={camera:{...(tween?.to??cam)},data:null};
+  sectionSession=session;tween=null;qualityRequest++;
+  touches.clear();viewport.classList.remove('dragging');
+  $('loading').hidden=true;
+  $('section-panel').hidden=false;document.body.classList.add('section-open');
+  userSize=[viewport.clientWidth,viewport.clientHeight].join();
+  $('overview').textContent='雙橋全景';
+  $('section-toggle').setAttribute('aria-expanded','true');$('section-toggle').textContent='關閉剖面';
+  $('pins').inert=true;$('station').disabled=true;
+  for(const button of $('presets').children)button.disabled=true;
+  $('reading').textContent='正在載入雙橋模型…';writeUrl();
+  try{
+    const [data]=await Promise.all([prepareSection(placeCutLine),scene.prepare(true)]);
+    if(sectionSession!==session)return;
+    session.data=data;go(sectionCamera(),false);
+    $('cut-line').hidden=false;data.enable();
+  }catch(error){
+    if(sectionSession!==session)return;
+    console.warn(error);$('reading').textContent='雙橋模型載入失敗。';
+    const retry=document.createElement('button');retry.textContent='再試一次';
+    retry.onclick=()=>{closeSection();openSection();};$('reading').append(retry);
+  }
+}
+function closeSection() {
+  if(!sectionSession)return;
+  const {camera}=sectionSession;sectionSession=null;cutDrag=null;
+  document.body.classList.remove('section-open');$('section-panel').hidden=true;$('cut-line').hidden=true;
+  $('pins').inert=false;$('section-toggle').setAttribute('aria-expanded','false');$('section-toggle').textContent='雙橋剖面';
+  userSize=[viewport.clientWidth,viewport.clientHeight].join();
+  $('overview').textContent='全區';go(camera,false);writeUrl();$('section-toggle').focus({preventScroll:true});
+}
+$('section-toggle').onclick=()=>sectionSession?closeSection():openSection();
+document.addEventListener('keydown',e=>{if(sectionSession && e.key==='Escape')closeSection();});
+let cutDrag=null;
+const cutLine=$('cut-line');
+cutLine.addEventListener('pointerdown',e=>{
+  if(!sectionSession?.data || !e.isPrimary || e.button!==0)return;
+  e.stopPropagation();cutLine.setPointerCapture(e.pointerId);
+  cutDrag={id:e.pointerId,x:e.clientX,y:e.clientY,worldY:sectionSession.data.y};
+});
+cutLine.addEventListener('pointermove',e=>{
+  if(cutDrag?.id!==e.pointerId)return;
+  const [,dy]=inverse(e.clientX-cutDrag.x,e.clientY-cutDrag.y);
+  sectionSession.data.moveTo(cutDrag.worldY+dy);
+});
+cutLine.addEventListener('lostpointercapture',()=>{cutDrag=null;});
 function updateNotes(){
   const p=places[selected];cards.forEach((b,i)=>b.setAttribute('aria-current',String(i===selected)));
   pins.forEach((b,i)=>b.classList.toggle('active',i===selected));
@@ -110,6 +179,7 @@ function updateNotes(){
 }
 function focusPlace(i,animate=true){
   if(!ready)return;
+  if(sectionSession)closeSection();
   const keepTopdown=cam.pitch===1 && !routeOverview;
   routeOverview=false;returnView=null;selected=i;const p=places[i],[x,y]=world(p.lon,p.lat);
   updateNotes();
@@ -118,7 +188,11 @@ function focusPlace(i,animate=true){
   const lift=p.lift*Math.sqrt(1-pitch*pitch)/pitch;
   go({x:x-Math.sin(angle)*lift,y:y-Math.cos(angle)*lift,angle,pitch,zoom:Math.min(12,viewport.clientWidth/p.span)},animate);
 }
-function overview(animate=true){if(!ready)return;routeOverview=false;returnView=null;selected=-1;updateNotes();go(homeCamera(),animate);}
+function overview(animate=true){
+  if(!ready)return;
+  if(sectionSession){if(sectionSession.data)go(sectionCamera(),animate);return;}
+  routeOverview=false;returnView=null;selected=-1;updateNotes();go(homeCamera(),animate);
+}
 let qualityRequest=0;
 function qualityButtons(){
   $('fine').setAttribute('aria-pressed',String(fine));$('low').setAttribute('aria-pressed',String(!fine));
@@ -206,10 +280,11 @@ viewport.addEventListener('keydown',e=>{
 });
 qualityButtons();
 let userSize=[viewport.clientWidth,viewport.clientHeight].join();
-new ResizeObserver(()=>{if(ready){const size=[viewport.clientWidth,viewport.clientHeight].join();if(size!==userSize){const home=homeCamera();if(routeOverview)go(routeCamera(),false);else if(selected<0)go(home,false);userSize=size;}invalidate();}}).observe(viewport);
+new ResizeObserver(()=>{if(ready){const size=[viewport.clientWidth,viewport.clientHeight].join();if(size!==userSize){const home=homeCamera();if(sectionSession?.data)go(sectionCamera(),false);else if(!sectionSession && routeOverview)go(routeCamera(),false);else if(!sectionSession && selected<0)go(home,false);userSize=size;}invalidate();}}).observe(viewport);
 try{
-  scene=await loadDistrict($('map'),fine);ready=true;$('route').disabled=false;qualityButtons();$('loading').hidden=true;go(homeCamera(),false);
+  scene=await loadDistrict($('map'),fine);ready=true;$('section-toggle').disabled=false;$('route').disabled=false;qualityButtons();$('loading').hidden=true;go(homeCamera(),false);
   const initial=places.findIndex(p=>p.id===query.get('place'));
   if(initial>=0)focusPlace(initial,false);else if(query.get('place')==='route')toggleRoute(false);else if(query.get('place')==='all')updateNotes();else focusPlace(3,false);
+  if(query.get('section')==='bridges')openSection();
   invalidate();
 }catch(error){console.error(error);$('loading').textContent='地圖載入失敗。';const retry=document.createElement('button');retry.textContent='重新載入';retry.onclick=()=>location.reload();$('loading').append(retry);}
